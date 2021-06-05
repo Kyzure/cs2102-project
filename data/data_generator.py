@@ -33,12 +33,6 @@ class JoinMeeting:
     self.endTime = endTime
     self.eid = eid  
 
-class MeetingRoom:
-  def __init__(self, room, floor, did): 
-    self.room = room
-    self.floor = floor
-    self.did = did
-
 class Manager:
   def __init__(self, eid, did): 
     self.eid = eid
@@ -58,6 +52,16 @@ class HealthDeclaration:
     self.date = date
     self.temp = temp
 
+class AddRooms:
+  def __init__(self, floor, room, rname, capacity, did, eid, date): 
+    self.floor = floor
+    self.room = room
+    self.rname = rname
+    self.capacity = capacity
+    self.did = did
+    self.eid = eid
+    self.date = date
+
 ##############
 #### Data ####
 ##############
@@ -65,9 +69,13 @@ class HealthDeclaration:
 sqlString = ""
 
 # Front data
+room_floor = []
 book_room = []
-approve_meeting = []
 join_meeting = []
+approve_meeting = []
+
+# randomRoomNames
+randomRoomNames = ["Flexidy", "Solaris", "YSolowarm", "Trippledex", "Keylex", "Treeflex", "Fintone", "Transcof", "Andalax", "Stringtough", "Gembucket", "Flexidy", "Otcom", "Flexidy", "Biodex", "Cookley", "Flexidy", "Tres-Zap", "Gembucket", "Zaam-Dox", "Voyatouch", "Prodder", "Keylex", "Viva", "Mat Lam Tam", "Holdlamis", "Voltsillam", "Daltfresh", "Tin", "Home Ing", "Tresom", "Zathin", "Cardify", "Matsoft", "TresZap", "Duobam", "Zathin", "Fixflex", "Opela", "Ventosanzap", "Trippledex", "Quo Lux", "Lotstring", "Namfix", "Bitwolf", "Cookley", "Alpha", "Sonsing", "Lotlux", "Keylex", "Greenlam", "Temp", "Job", "Voyatouch", "Cookley", "Home Ing", "Wrapsafe", "Ronstring", "Duobam", "Tres-Zap", "Holdlamis", "Bytecard", "Zathin", "Tresom", "Fintone", "Vagram", "Andalax", "Ventosanzap", "Voyatouch", "Biodex", "Bigtax", "Transcof", "Bamity", "Sonsing", "Viva", "YSolowarm", "Biodex", "Bigtax", "Bitchip", "Tampflex", "Span", "Tempsoft", "Job", "Kanlam", "Zamit", "Lotstring", "Konklux", "Stim", "Tempsoft", "Tres-Zap", "Duobam", "Alphazap", "Lotstring", "Namfix", "Subin", "Fix San", "Matsoft", "Asoka", "Cardguard", "Toughjoyfax"]
 
 # Bookers
 booker_list = [2, 3, 5, 9, 10, 11, 12, 13, 19, 20, 21, 22, 23, 24, 25, 28, 29, 31, 36, 37, 39, 41, 44, 45, 47, 48, 49, 52, 54, 56, 58, 60, 62, 63, 64, 66, 67, 68, 70, 71, 74, 75, 78, 81, 82, 83, 84, 85, 86, 87, 88, 89, 91, 93, 96]
@@ -89,63 +97,12 @@ manager_list.append(Manager( 47,  5))
 manager_list.append(Manager( 56,  5))
 manager_list.append(Manager( 64,  6))
 manager_list.append(Manager( 70,  6))
+manager_list.append(Manager( 77,  7))
 manager_list.append(Manager( 81,  8))
 manager_list.append(Manager( 82,  8))
 manager_list.append(Manager( 85,  8))
 manager_list.append(Manager( 91,  9))
 manager_list.append(Manager( 96, 10))
-
-room_floor = []
-room_floor.append(MeetingRoom( 8,  5, 10))
-room_floor.append(MeetingRoom(36, 12,  8))
-room_floor.append(MeetingRoom(50, 14,  2))
-room_floor.append(MeetingRoom( 8,  7,  4))
-room_floor.append(MeetingRoom(35,  4,  2))
-room_floor.append(MeetingRoom(32, 15,  6))
-room_floor.append(MeetingRoom(19,  1,  1))
-room_floor.append(MeetingRoom(35,  2,  5))
-room_floor.append(MeetingRoom(48, 11,  7))
-room_floor.append(MeetingRoom(40,  9,  3))
-room_floor.append(MeetingRoom(44,  5,  3))
-room_floor.append(MeetingRoom(11,  4,  9))
-room_floor.append(MeetingRoom(44,  4,  3))
-room_floor.append(MeetingRoom(10, 11,  7))
-room_floor.append(MeetingRoom(42,  6,  3))
-room_floor.append(MeetingRoom(10, 13,  5))
-room_floor.append(MeetingRoom(27,  5,  8))
-room_floor.append(MeetingRoom(29,  9, 10))
-room_floor.append(MeetingRoom( 2,  1,  6))
-room_floor.append(MeetingRoom(27,  9,  5))
-room_floor.append(MeetingRoom(11, 15,  7))
-room_floor.append(MeetingRoom(27,  8,  5))
-room_floor.append(MeetingRoom(13, 15,  5))
-room_floor.append(MeetingRoom( 2,  8,  8))
-room_floor.append(MeetingRoom(28,  3,  2))
-room_floor.append(MeetingRoom(37, 13,  6))
-room_floor.append(MeetingRoom(37,  6,  8))
-room_floor.append(MeetingRoom(48, 13, 10))
-room_floor.append(MeetingRoom(35, 14,  7))
-room_floor.append(MeetingRoom(35,  3,  9))
-room_floor.append(MeetingRoom(12,  1,  3))
-room_floor.append(MeetingRoom( 4, 13,  7))
-room_floor.append(MeetingRoom(26,  8,  5))
-room_floor.append(MeetingRoom( 1, 10,  6))
-room_floor.append(MeetingRoom(47, 15,  1))
-room_floor.append(MeetingRoom(32,  2,  2))
-room_floor.append(MeetingRoom(26, 13,  3))
-room_floor.append(MeetingRoom(21, 13,  1))
-room_floor.append(MeetingRoom(46,  6,  8))
-room_floor.append(MeetingRoom(28,  2,  8))
-room_floor.append(MeetingRoom(11, 13,  5))
-room_floor.append(MeetingRoom(34,  1,  1))
-room_floor.append(MeetingRoom(31, 14,  3))
-room_floor.append(MeetingRoom(18, 13,  7))
-room_floor.append(MeetingRoom( 8,  8,  8))
-room_floor.append(MeetingRoom(21,  5,  1))
-room_floor.append(MeetingRoom(31,  1,  8))
-room_floor.append(MeetingRoom(36, 15,  5))
-room_floor.append(MeetingRoom(31,  3,  1))
-room_floor.append(MeetingRoom(19,  8, 10))
 
 # Populate time of day
 time_of_day = []
@@ -206,36 +163,70 @@ for num in range(4000):
     (str(randTemp) + "." + str(randTempFloat)))
 
   line = "CALL declare_health ("
-  line += obj.eid + ", " + obj.date + ", " + obj.temp + ")\n"
+  line += obj.eid + ", " + obj.date + ", " + obj.temp + ");\n"
   sqlString += line
 
 # Spacing
 sqlString += "\n"
 
-#### Updates ####
+#### Rooms ####
+for num in range(250):
+  randFloor = random.randrange(1, 100)
+  randRoom = random.randrange(1, 100)
+  randName = random.randrange(0, len(randomRoomNames))
+  randCapacity = random.randrange(1, 100)
+  randDid = random.randrange(1, 11)
+  randManager = random.randrange(0, len(manager_list))  
+  date = "'2021-10-01'"
+
+  obj = AddRooms(
+    str(randFloor),
+    str(randRoom),
+    str(randomRoomNames[randName]),
+    str(randCapacity),
+    str(randDid),
+    str(manager_list[randManager].eid),
+    str(date))
+
+  line = "CALL add_room ("
+  line += obj.floor + ", " + obj.room + ", '" + obj.rname + "', "
+  line += obj.capacity + ", " + obj.did + ", " + obj.eid + ", " + obj.date + ");\n"
+  sqlString += line
+  room_floor.append(obj)
+
+# Spacing
+sqlString += "\n"
+
+#### ChangeCapcity ####
 for num in range(400):
   randRoom = random.randrange(0, len(room_floor))
-  randManager = random.randrange(0, len(manager_list))
   randCapcity =  random.randrange(2, 100)
   randDate = random.randrange(0, len(booking_dates))
+  temp_list = []
+
+  for m in manager_list:
+    if str(m.did) == str(room_floor[randRoom].did):
+      temp_list.append(m)
+  randManager = random.randrange(0, len(temp_list))
+  manager = temp_list[randManager]
 
   obj = Updates(
     str(room_floor[randRoom].floor),
     str(room_floor[randRoom].room),
-    str(manager_list[randManager].eid),
+    str(manager.eid),
     str(randCapcity),
     str(booking_dates[randDate]))
 
   line = "CALL change_capacity ("
   line += obj.floor + ", " + obj.room + ", " + obj.eid + ", "
-  line += obj.capacity + ", " + obj.date + ")\n"
+  line += obj.capacity + ", " + obj.date + ");\n"
   sqlString += line
 
 # Spacing
 sqlString += "\n"
 
 #### book_room ####
-for num in range(500):
+for num in range(300):
   randRoom = random.randrange(0, len(room_floor))
   randDate = random.randrange(0, len(booking_dates))
   randStartTime = random.randrange(0, len(time_of_day))
@@ -273,7 +264,7 @@ for num in range(500):
 sqlString += "\n"
 
 #### join_meeting ####
-for num in range(5000):
+for num in range(2000):
   randBooking = random.randrange(0, len(book_room))
   randEmployee = random.randrange(1, 101)
   
@@ -293,12 +284,17 @@ for num in range(5000):
   sqlString += line
   join_meeting.append(obj)
 
+# Spacing
+sqlString += "\n"
+
 #### approve_meeting ####
-for num in range(500):
-  randBooking = random.randrange(0, len(book_room))
+new_book_room = book_room 
+for num in range(295):
+  randBooking = random.randrange(0, len(new_book_room))
   randManager = random.randrange(1, len(manager_list))
-  
-  booking = book_room[randBooking]
+
+  booking = new_book_room[randBooking]
+  new_book_room.pop(randBooking)
 
   obj = ApproveMeeting(
     str(booking.floor),
@@ -315,8 +311,6 @@ for num in range(500):
 
 # Spacing
 sqlString += "\n"
-
-#### approve_meeting ####
 
 #### Write ####
 f = open("data.txt", "w")

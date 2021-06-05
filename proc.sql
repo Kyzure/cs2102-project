@@ -5,7 +5,7 @@
 -- Drops --
 DROP PROCEDURE IF EXISTS add_department, remove_department, add_room, change_capacity, add_employee, remove_employee, book_room, unbook_room, join_meeting, leave_meeting, approve_meeting, declare_health CASCADE;
 
-DROP FUNCTION IF EXISTS search_room, check_joining, check_approval, check_booking, add_booker, contact_tracing, remove_close_contacts, remove_booked_meetings, check_health_validity CASCADE;
+DROP FUNCTION IF EXISTS search_room, check_joining, check_approval, check_booking, add_booker, contact_tracing, remove_close_contacts, remove_booked_meetings, check_health_validity, non_compliance, view_booking_report, view_future_meeting, view_manager_report CASCADE;
 
 DROP TRIGGER IF EXISTS check_retired_Updates ON Updates;
 DROP TRIGGER IF EXISTS check_retired_Joins ON Joins;
@@ -15,6 +15,11 @@ DROP TRIGGER IF EXISTS check_retired_Sessions ON Sessions;
 DROP TRIGGER IF EXISTS trace_contacts ON healthdeclaration;
 DROP TRIGGER IF EXISTS remove_bookings ON healthdeclaration;
 DROP TRIGGER IF EXISTS check_health_declared ON healthdeclaration;
+DROP TRIGGER IF EXISTS is_Booker_or_Manager_retired ON Sessions;
+DROP TRIGGER IF EXISTS is_employee_retired ON Sessions;
+DROP TRIGGER IF EXISTS is_employee_retired ON HealthDeclaration;
+DROP TRIGGER IF EXISTS is_employee_retired ON Updates;
+DROP TRIGGER IF EXISTS is_employee_retired ON Joins;
 
 -----------
 -- Basic --
@@ -43,9 +48,9 @@ CREATE OR REPLACE PROCEDURE add_room
   (floor INTEGER, room INTEGER, rname TEXT, capacity INTEGER, did INTEGER, eid INTEGER, added_date DATE)
 AS $$
 BEGIN
-  IF added_date > CURRENT_DATE
+  IF added_date < CURRENT_DATE
     THEN
-      RAISE NOTICE '% is not a current or past date', added_date;      
+      RAISE NOTICE '% is not a current or future date', added_date;      
   ELSE
     INSERT INTO MeetingRooms VALUES (room, floor, rname, did);
     INSERT INTO Updates VALUES (room, floor, eid, added_date, capacity);
@@ -58,9 +63,9 @@ CREATE OR REPLACE PROCEDURE change_capacity
   (_floor INTEGER, _room INTEGER, _eid INTEGER, _capacity INTEGER, _date DATE)
 AS $$
 BEGIN
-  IF _date > CURRENT_DATE
+  IF _date < CURRENT_DATE
     THEN
-      RAISE NOTICE '% is not a current or past date', _date;
+      RAISE NOTICE '% is not a current or future date', _date;
   ELSEIF _eid NOT IN (SELECT * FROM Manager)
     THEN
       RAISE NOTICE '% is not a manager', _eid;
