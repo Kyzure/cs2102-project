@@ -177,10 +177,11 @@ for num in range(1, 31):
 sqlString += "\n"
 
 #### Employees ####
+managerDid = 1
 for num in range(1, 501):
   randName = random.randrange(0, len(employee_names))
-  randDid = random.randrange(1, len(department_list) + 1)
   randType = random.randrange(0, 10)
+  randDid = random.randrange(1, len(department_list) + 1)
   randPhone_1 = random.randrange(80000000, 99999999)
   randPhone_2 = random.randrange(80000000, 99999999)
   isPhoneEmpty_1 = random.randrange(0, 8) == 0
@@ -194,20 +195,23 @@ for num in range(1, 501):
   if randType <= 3:
     randType = "Junior"
   else:
+    if randType <= 6:
+      randType = "Senior"
+    elif randType <= 9:
+      manager = Manager(
+        str(num),
+        str(managerDid)
+      )
+      manager_list.append(manager)
+      randType = "Manager"
+      randDid = managerDid
+      managerDid = (managerDid % len(department_list)) + 1
+
     booker = Booker(
       str(num),
       str(randDid)
     )
     booker_list.append(booker)
-    if randType <= 7:
-      randType = "Senior"
-    elif randType <= 9:
-      manager = Manager(
-        str(num),
-        str(randDid)
-      )
-      manager_list.append(manager)
-      randType = "Manager"
       
   obj = Employee(
     str(num),
@@ -234,7 +238,6 @@ for num in range(50):
   line = "CALL remove_employee ("
   line += str(randEmployee) + ", " + str(booking_dates[randDate]) + ");\n"
   sqlString += line
-  department_list.append(obj)
 
 # Spacing
 sqlString += "\n"  
@@ -263,11 +266,11 @@ for num in range(250):
   randFloor = random.randrange(1, 100)
   randRoom = random.randrange(1, 100)
   randName = random.randrange(0, len(randomRoomNames))
-  randCapacity = random.randrange(1, 100)
-  randDid = random.randrange(1, 11)
+  randCapacity = random.randrange(2, 100)
+  randDid = random.randrange(1, len(department_list))
   randManager = random.randrange(0, len(manager_list))  
   date = "'2021-10-01'"
-
+  
   obj = AddRooms(
     str(randFloor),
     str(randRoom),
@@ -296,6 +299,7 @@ for num in range(400):
   for m in manager_list:
     if str(m.did) == str(room_floor[randRoom].did):
       temp_list.append(m)
+
   randManager = random.randrange(0, len(temp_list))
   manager = temp_list[randManager]
 
@@ -387,6 +391,7 @@ for num in range(350):
   for m in manager_list:
     if str(m.did) == str(booking.did):
       temp_list.append(m)
+  
   randManager = random.randrange(0, len(temp_list))
   manager = temp_list[randManager]
 

@@ -5,7 +5,7 @@
 -- Drops --
 DROP PROCEDURE IF EXISTS add_department, remove_department, add_room, change_capacity, add_employee, remove_employee, book_room, unbook_room, join_meeting, leave_meeting, approve_meeting, declare_health CASCADE;
 
-DROP FUNCTION IF EXISTS search_room, check_joining, check_approval, check_booking, add_booker, contact_tracing, remove_close_contacts, remove_booked_meetings, check_health_validity, non_compliance, view_booking_report, view_future_meeting, view_manager_report CASCADE;
+DROP FUNCTION IF EXISTS search_room, check_joining, check_approval, check_booking, add_booker, contact_tracing, remove_close_contacts, remove_booked_meetings, check_health_validity, non_compliance, view_booking_report, view_future_meeting, view_manager_report, is_booker_or_manager_retired, is_employee_retired CASCADE;
 
 DROP TRIGGER IF EXISTS check_retired_Updates ON Updates;
 DROP TRIGGER IF EXISTS check_retired_Joins ON Joins;
@@ -15,7 +15,7 @@ DROP TRIGGER IF EXISTS check_retired_Sessions ON Sessions;
 DROP TRIGGER IF EXISTS trace_contacts ON healthdeclaration;
 DROP TRIGGER IF EXISTS remove_bookings ON healthdeclaration;
 DROP TRIGGER IF EXISTS check_health_declared ON healthdeclaration;
-DROP TRIGGER IF EXISTS is_Booker_or_Manager_retired ON Sessions;
+DROP TRIGGER IF EXISTS is_booker_or_manager_retired ON Sessions;
 DROP TRIGGER IF EXISTS is_employee_retired ON Sessions;
 DROP TRIGGER IF EXISTS is_employee_retired ON HealthDeclaration;
 DROP TRIGGER IF EXISTS is_employee_retired ON Updates;
