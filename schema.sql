@@ -98,15 +98,3 @@ CREATE TABLE Joins (
   FOREIGN KEY (eid) REFERENCES Employees (eid),
   FOREIGN KEY (room, floor, time, date) REFERENCES Sessions (room, floor, time, date)
 );
-
-
-
-
-
-
-
-
-
-
-
-
