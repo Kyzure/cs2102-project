@@ -26,26 +26,20 @@ $$ LANGUAGE plpgsql;
 
 ---- Add Room ----
 CREATE OR REPLACE PROCEDURE add_room
-  (floor, rnum, rname, capacity, did)
+  (floor INTEGER, room INTEGER, rname TEXT, capacity INTEGER, did INTEGER)
 AS $$
 BEGIN
   INSERT INTO MeetingRooms VALUES (room, floor, rname, did);
-  -- INSERT INTO Updates VALUES (room, floor);
+  INSERT INTO Updates VALUES (room, floor, null, CURRENT_DATE);
 END
 $$ LANGUAGE plpgsql;
 
 ---- Change Capacity ----
 CREATE OR REPLACE PROCEDURE change_capacity
-  (nfloor, nroom, ncap, ndate)
+  (floor INTEGER, room INTEGER, capacity INTEGER, date DATE)
 AS $$
 BEGIN
-  UPDATE Updates U
-  SET date = ndate, cap = ncap
-  FROM MeetingRooms M
-  WHERE U.room = M.nroom, U.floor = M.floor
-  UPDATE
-  SET
-  WHERE ;
+  INSERT INTO Updates VALUES (room, floor, null, date, capacity);
 END
 $$ LANGUAGE plpgsql;
 
