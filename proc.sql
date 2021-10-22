@@ -3,6 +3,85 @@
 ----------------------------------------------------------------
 
 -----------
+-- Basic --
+-----------
+
+---- Add Department ----
+CREATE OR REPLACE PROCEDURE add_department
+  (did INTEGER, dname TEXT)
+AS $$
+BEGIN
+  INSERT INTO Departments VALUES (did, dname);
+END
+$$ LANGUAGE plpgsql;
+
+---- Remove Department ----
+CREATE OR REPLACE PROCEDURE remove_department
+  (selected_did INTEGER)
+AS $$
+BEGIN
+  DELETE FROM Departments WHERE did = selected_did;
+END
+$$ LANGUAGE plpgsql;
+
+---- Add Room ----
+CREATE OR REPLACE PROCEDURE add_room
+  (floor, rnum, rname, capacity, did)
+AS $$
+BEGIN
+  INSERT INTO MeetingRooms VALUES (room, floor, rname, did);
+  -- INSERT INTO Updates VALUES (room, floor);
+END
+$$ LANGUAGE plpgsql;
+
+---- Change Capacity ----
+CREATE OR REPLACE PROCEDURE change_capacity
+  (nfloor, nroom, ncap, ndate)
+AS $$
+BEGIN
+  UPDATE Updates U
+  SET date = ndate, cap = ncap
+  FROM MeetingRooms M
+  WHERE U.room = M.nroom, U.floor = M.floor
+  UPDATE
+  SET
+  WHERE ;
+END
+$$ LANGUAGE plpgsql;
+
+---- Add Employee ----
+CREATE OR REPLACE PROCEDURE add_employee
+  (ename TEXT, contact TEXT, kind TEXT, did INTEGER)
+AS $$
+BEGIN
+  WITH new_eid AS (
+    SELECT MAX(eid) + 1
+    FROM Employees
+  )
+  INSERT INTO Employees VALUES (new_eid, ename, null, contact, null, did);
+  CASE
+    WHEN kind = 'junior' OR 'Junior' THEN
+      INSERT INTO Junior VALUES (new_eid);
+    WHEN kind = 'senior' OR 'Senior' THEN
+      INSERT INTO Senior VALUES (new_eid);
+    WHEN kind = 'manager' OR 'Manager' THEN
+      INSERT INTO Manager VALUES (new_eid);
+  END CASE;
+END
+$$ LANGUAGE plpgsql;
+
+---- Remove Employee ----
+CREATE OR REPLACE PROCEDURE remove_employee
+  (selected_eid INTEGER, resignation_date DATE)
+AS $$
+BEGIN
+  Update Employees
+  SET resigned_date = date
+  WHERE eid = selected_eid;
+END
+$$ LANGUAGE plpgsql;
+
+-----------
 -- Admin --
 -----------
 
@@ -94,28 +173,7 @@ $$ LANGUAGE plpgsql;
 --------------------------- TRIGGERS ---------------------------
 ----------------------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+-----------
+-- Basic --
+-----------
 
