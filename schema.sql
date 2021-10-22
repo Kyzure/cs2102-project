@@ -1,5 +1,5 @@
 ----------------------------------------------------------------
--- SCHEMA ------------------------------------------------------
+---------------------------- SCHEMA ----------------------------
 ----------------------------------------------------------------
 
 DROP TABLE IF EXISTS Departments, Employees, MeetingRooms, Junior, Booker, Senior, Manager, HealthDeclaration, Updates, Sessions, Joins;
@@ -60,6 +60,7 @@ CREATE TABLE HealthDeclaration (
   date DATE,
   temp NUMERIC,
   fever BIT,
+  PRIMARY KEY (eid, date),
   FOREIGN KEY (eid) REFERENCES Employees(eid)
 );
 
@@ -77,7 +78,7 @@ CREATE TABLE Updates (
 CREATE TABLE Sessions (
   room INTEGER,
   floor INTEGER,
-  time TIMESTAMP,
+  time TIME,
   date DATE,
   meid INTEGER,
   beid INTEGER NOT NULL,
