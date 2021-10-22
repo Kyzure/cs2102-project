@@ -92,7 +92,7 @@ CREATE TABLE Joins (
   eid INTEGER,
   room INTEGER,
   floor INTEGER,
-  time TIMESTAMP,
+  time TIME,
   date DATE,
   PRIMARY KEY (eid, room, floor, time, date),
   FOREIGN KEY (eid) REFERENCES Employees (eid),
