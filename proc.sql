@@ -76,6 +76,116 @@ END
 $$ LANGUAGE plpgsql;
 
 -----------
+-- Core --
+-----------
+
+---- search_room ----
+CREATE OR REPLACE FUNCTION search_room
+  (IN capacity INTEGER, IN date DATE, IN startTime TIME, IN endTime TIME)
+RETURNS TABLE(floor INTEGER, room INTEGER, did INTEGER, room_capcity INTEGER) AS $$
+BEGIN
+  RETURN QUERY (
+    SELECT mr.floor, mr.room, mr.did, up.new_cap
+    FROM MeetingRooms mr 
+    JOIN (
+      SELECT * FROM Updates
+      WHERE new_cap >= capacity
+    ) up
+    ON mr.floor = up.floor
+    AND mr.room = up.room
+    WHERE NOT EXISTS (
+      SELECT s.floor, s.room
+      FROM Sessions s
+      WHERE time >= startTime
+      AND time < endTime
+    )
+  );
+END
+$$ LANGUAGE plpgsql;
+
+---- book_room ----
+CREATE OR REPLACE PROCEDURE book_room
+  (floor_number INTEGER, room_number INTEGER, meet_date DATE, 
+  startTime TIME, endTime TIME, id INTEGER)
+AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM sessions S
+    WHERE s.floor = floor_number 
+      AND s.room = room_number
+      AND s.date = meet_date
+      AND s.time >= startTime
+      AND s.time < endTime
+  ) THEN
+    WITH RECURSIVE insertSession AS (
+    SELECT startTime AS time
+    UNION ALL
+    SELECT time + interval '1 hour'
+    FROM insertSession
+    WHERE time + interval '1 hour'< endTime
+  )
+    INSERT INTO sessions (room, floor, time , date, beid)
+    SELECT room_number, floor_number, time, meet_date, id
+    FROM insertSession;
+  END IF;
+END
+$$ LANGUAGE plpgsql;
+
+---- unbook_room ----
+CREATE OR REPLACE PROCEDURE unbook_room
+  (floor_number INTEGER, room_number INTEGER, meet_date DATE, 
+  startTime TIME, endTime TIME, id INTEGER)
+AS $$
+BEGIN
+  DELETE FROM Sessions s
+  WHERE s.floor = floor_number 
+    AND s.room = room_number
+    AND s.date = meet_date
+    AND s.time >= startTime
+    AND s.time < endTime
+    and beid = id;
+END
+$$ LANGUAGE plpgsql;
+
+---- join_meeting ----
+CREATE OR REPLACE PROCEDURE join_meeting
+  (floor_number INTEGER, room_number INTEGER, meet_date DATE, 
+  startTime TIME, endTime TIME, id INTEGER)
+AS $$
+BEGIN
+ WITH RECURSIVE insertMember AS (
+   SELECT startTime AS time
+   UNION ALL
+   SELECT time + interval '1 hour'
+   FROM insertMember
+   WHERE time + interval '1 hour'< endTime
+ )
+ INSERT INTO Joins(eid, room, floor, time, date)
+ SELECT id, room_number, floor_number, time, meet_date 
+ FROM insertMember;
+END
+$$ LANGUAGE plpgsql;
+
+---- leave_meeting ----
+CREATE OR REPLACE PROCEDURE leave_meeting
+  (floor_number INTEGER, room_number INTEGER, meet_date DATE, 
+  startTime TIME, endTime TIME, id INTEGER)
+AS $$
+BEGIN
+
+END
+$$ LANGUAGE plpsql;
+---- approve_meeting ----
+CREATE OR REPLACE PROCEDURE approve_meeting
+  (floor_number INTEGER, room_number INTEGER, meet_date DATE, 
+  startTime TIME, endTime TIME, id INTEGER)
+AS $$
+BEGIN
+
+END
+$$ LANGUAGE plpsql;
+-----------
 -- Admin --
 -----------
 
