@@ -185,6 +185,43 @@ BEGIN
 
 END
 $$ LANGUAGE plpsql;
+
+------------
+-- Health --
+------------
+
+CREATE OR REPLACE FUNCTION declare_health
+  (IN eid INT, IN date DATE, IN temp NUMERIC) 
+RETURNS VOID AS $$
+    DECLARE 
+        fever BIT := '0';
+    BEGIN
+        IF temp > 37.5
+            THEN fever := '1';
+        END IF;
+        INSERT INTO healthdeclaration
+        VALUES (eid, date, temp, fever);
+    END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION contact_tracing
+  (IN e_id INT)
+RETURNS TABLE (eid INT) AS $$
+    BEGIN
+    SELECT v.eid
+        FROM joins u, joins v, healthdeclaration h
+        WHERE h.eid = e_id
+            AND h.fever = '1'
+            AND u.eid = e_id
+            AND v.eid <> e_id
+            AND u.room = v.room
+            AND u.floor = v.floor
+            AND u.time = v.time
+            AND u.date = v.date
+            AND v.date >= D - interval '3 day';
+    END;
+$$ LANGUAGE plpgsql;
+
 -----------
 -- Admin --
 -----------
