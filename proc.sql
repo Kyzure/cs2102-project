@@ -26,11 +26,11 @@ $$ LANGUAGE plpgsql;
 
 ---- Add Room ----
 CREATE OR REPLACE PROCEDURE add_room
-  (floor INTEGER, room INTEGER, rname TEXT, capacity INTEGER, did INTEGER)
+  (floor INTEGER, room INTEGER, rname TEXT, capacity INTEGER, did INTEGER, meid INTEGER)
 AS $$
 BEGIN
   INSERT INTO MeetingRooms VALUES (room, floor, rname, did);
-  INSERT INTO Updates VALUES (room, floor, null, CURRENT_DATE, capacity);
+  INSERT INTO Updates VALUES (room, floor, meid, CURRENT_DATE, capacity);
 END
 $$ LANGUAGE plpgsql;
 

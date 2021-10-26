@@ -71,7 +71,7 @@ CREATE TABLE Updates (
   eid INTEGER,
   date DATE,
   new_cap INTEGER NOT NULL,
-  PRIMARY KEY (room, floor, date),
+  PRIMARY KEY (room, floor, meid, date),
   FOREIGN KEY (room, floor) REFERENCES MeetingRooms (room, floor),
   FOREIGN KEY (eid) REFERENCES Manager (eid)
 );
