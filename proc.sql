@@ -30,36 +30,36 @@ CREATE OR REPLACE PROCEDURE add_room
 AS $$
 BEGIN
   INSERT INTO MeetingRooms VALUES (room, floor, rname, did);
-  INSERT INTO Updates VALUES (room, floor, null, CURRENT_DATE);
+  INSERT INTO Updates VALUES (room, floor, null, CURRENT_DATE, capacity);
 END
 $$ LANGUAGE plpgsql;
 
 ---- Change Capacity ----
 CREATE OR REPLACE PROCEDURE change_capacity
-  (floor INTEGER, room INTEGER, capacity INTEGER, date DATE)
+  (floor INTEGER, room INTEGER, mid INTEGER, capacity INTEGER, date DATE)
 AS $$
 BEGIN
-  INSERT INTO Updates VALUES (room, floor, null, date, capacity);
+  INSERT INTO Updates VALUES (room, floor, mid, date, capacity);
 END
 $$ LANGUAGE plpgsql;
 
 ---- Add Employee ----
--- TODO: Add email to the employee
 CREATE OR REPLACE PROCEDURE add_employee
   (ename TEXT, primary_contact INTEGER, secondary_contact INTEGER, kind TEXT, did INTEGER)
 AS $$
+DECLARE
+  new_eid INTEGER;
+  new_email TEXT;
 BEGIN
-  WITH new_eid AS (
-    SELECT MAX(eid) + 1
-    FROM Employees
-  )
-  INSERT INTO Employees VALUES (new_eid, ename, null, primary_contact, secondary_contact, null, did);
+  SELECT COALESCE(MAX(eid), 0) + 1 INTO new_eid FROM Employees;
+  SELECT CONCAT(ename, new_eid, '@gmail.com') INTO new_email;
+  INSERT INTO Employees VALUES (new_eid, ename, new_email, primary_contact, secondary_contact, null, did);
   CASE
-    WHEN kind = 'junior' OR 'Junior' THEN
+    WHEN kind = 'junior' OR kind = 'Junior' THEN
       INSERT INTO Junior VALUES (new_eid);
-    WHEN kind = 'senior' OR 'Senior' THEN
+    WHEN kind = 'senior' OR kind = 'Senior' THEN
       INSERT INTO Senior VALUES (new_eid);
-    WHEN kind = 'manager' OR 'Manager' THEN
+    WHEN kind = 'manager' OR kind = 'Manager' THEN
       INSERT INTO Manager VALUES (new_eid);
   END CASE;
 END
@@ -318,4 +318,26 @@ $$ LANGUAGE plpgsql;
 -----------
 -- Basic --
 -----------
+/*
+CREATE OR REPLACE FUNCTION is_department_empty()
+RETURNS TRIGGER AS $$
+DECLARE
+  employee_count INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO employee_count
+  FROM Employees E, Department D
+  WHERE E.did = D.did;
 
+  IF employee_count = 0 THEN
+    RETURN NEW;
+  ELSE
+    RAISE NOTICE '% Department is not empty.', D.dname;
+    RETURN NULL;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER check_department_empty
+BEFORE DELETE ON Departments
+FOR EACH ROW EXECUTE FUNCTION is_department_empty();
+*/
