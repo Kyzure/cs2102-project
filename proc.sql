@@ -44,15 +44,16 @@ END
 $$ LANGUAGE plpgsql;
 
 ---- Add Employee ----
+-- TODO: Add email to the employee
 CREATE OR REPLACE PROCEDURE add_employee
-  (ename TEXT, contact TEXT, kind TEXT, did INTEGER)
+  (ename TEXT, primary_contact INTEGER, secondary_contact INTEGER, kind TEXT, did INTEGER)
 AS $$
 BEGIN
   WITH new_eid AS (
     SELECT MAX(eid) + 1
     FROM Employees
   )
-  INSERT INTO Employees VALUES (new_eid, ename, null, contact, null, did);
+  INSERT INTO Employees VALUES (new_eid, ename, null, primary_contact, secondary_contact, null, did);
   CASE
     WHEN kind = 'junior' OR 'Junior' THEN
       INSERT INTO Junior VALUES (new_eid);
