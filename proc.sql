@@ -193,6 +193,25 @@ $$ LANGUAGE plpsql;
 -- Health --
 ------------
 
+-- Replaced to a PROCEDURE for data usage. --
+-- Needs to overwrite current temperatures --
+CREATE OR REPLACE PROCEDURE declare_health
+  (IN new_eid INT, IN new_date DATE, IN new_temperature NUMERIC)
+AS $$
+DECLARE
+    fever BIT := '0';
+BEGIN
+    DELETE FROM healthdeclaration
+    WHERE eid = new_eid AND date = new_date;
+    IF new_temperature > 37.5
+        THEN fever := '1';
+    END IF;
+    INSERT INTO healthdeclaration VALUES (new_eid, new_date, new_temperature, fever);
+END;
+$$ LANGUAGE plpgsql;
+
+/*
+-- Replaced to a PROCEDURE for data usage. --
 CREATE OR REPLACE FUNCTION declare_health
   (IN eid INT, IN date DATE, IN temp NUMERIC) 
 RETURNS VOID AS $$
@@ -206,6 +225,8 @@ RETURNS VOID AS $$
         VALUES (eid, date, temp, fever);
     END;
 $$ LANGUAGE plpgsql;
+
+*/
 
 CREATE OR REPLACE FUNCTION contact_tracing
   (IN e_id INT)
