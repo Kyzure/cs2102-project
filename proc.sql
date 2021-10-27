@@ -45,7 +45,7 @@ $$ LANGUAGE plpgsql;
 
 ---- Add Employee ----
 CREATE OR REPLACE PROCEDURE add_employee
-  (ename TEXT, primary_contact INTEGER, secondary_contact INTEGER, kind TEXT, did INTEGER)
+  (ename TEXT, primary_contact TEXT, secondary_contact TEXT, kind TEXT, did INTEGER)
 AS $$
 DECLARE
   new_eid INTEGER;
@@ -58,8 +58,10 @@ BEGIN
     WHEN kind = 'junior' OR kind = 'Junior' THEN
       INSERT INTO Junior VALUES (new_eid);
     WHEN kind = 'senior' OR kind = 'Senior' THEN
+      INSERT INTO Booker VALUES (new_eid);
       INSERT INTO Senior VALUES (new_eid);
     WHEN kind = 'manager' OR kind = 'Manager' THEN
+      INSERT INTO Booker VALUES (new_eid);
       INSERT INTO Manager VALUES (new_eid);
   END CASE;
 END
@@ -341,3 +343,7 @@ CREATE TRIGGER check_department_empty
 BEFORE DELETE ON Departments
 FOR EACH ROW EXECUTE FUNCTION is_department_empty();
 */
+
+
+
+

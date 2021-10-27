@@ -14,8 +14,8 @@ CREATE TABLE Employees (
   eid INTEGER,
   ename TEXT,
   email TEXT,
-  primary_contact INTEGER,
-  secondary_contact INTEGER,
+  primary_contact TEXT,
+  secondary_contact TEXT,
   resigned_date DATE,
   did INTEGER NOT NULL,
   PRIMARY KEY (eid),
@@ -100,6 +100,7 @@ CREATE TABLE Joins (
   FOREIGN KEY (room, floor, time, date) REFERENCES Sessions (room, floor, time, date)
 );
 
+/*
 CREATE TABLE Approves (
   aid INTEGER,
   eid INTEGER,
@@ -122,3 +123,5 @@ CREATE TABLE Books (
   PRIMARY KEY (room, floor, time, date),
   FOREIGN KEY (bid) REFERENCES Booker (eid);
 );
+*/
+
