@@ -26,39 +26,42 @@ $$ LANGUAGE plpgsql;
 
 ---- Add Room ----
 CREATE OR REPLACE PROCEDURE add_room
-  (floor INTEGER, room INTEGER, rname TEXT, capacity INTEGER, did INTEGER)
+  (floor INTEGER, room INTEGER, rname TEXT, capacity INTEGER, did INTEGER, eid INTEGER, added_date DATE)
 AS $$
 BEGIN
   INSERT INTO MeetingRooms VALUES (room, floor, rname, did);
-  INSERT INTO Updates VALUES (room, floor, null, CURRENT_DATE);
+  INSERT INTO Updates VALUES (room, floor, eid, added_date, capacity);
 END
 $$ LANGUAGE plpgsql;
 
 ---- Change Capacity ----
 CREATE OR REPLACE PROCEDURE change_capacity
-  (floor INTEGER, room INTEGER, capacity INTEGER, date DATE)
+  (floor INTEGER, room INTEGER, eid INTEGER, capacity INTEGER, date DATE)
 AS $$
 BEGIN
-  INSERT INTO Updates VALUES (room, floor, null, date, capacity);
+  INSERT INTO Updates VALUES (room, floor, eid, date, capacity);
 END
 $$ LANGUAGE plpgsql;
 
 ---- Add Employee ----
 CREATE OR REPLACE PROCEDURE add_employee
-  (ename TEXT, contact TEXT, kind TEXT, did INTEGER)
+  (ename TEXT, primary_contact TEXT, secondary_contact TEXT, kind TEXT, did INTEGER)
 AS $$
+DECLARE
+  new_eid INTEGER;
+  new_email TEXT;
 BEGIN
-  WITH new_eid AS (
-    SELECT MAX(eid) + 1
-    FROM Employees
-  )
-  INSERT INTO Employees VALUES (new_eid, ename, null, contact, null, did);
+  SELECT COALESCE(MAX(eid), 0) + 1 INTO new_eid FROM Employees;
+  SELECT CONCAT(ename, new_eid, '@gmail.com') INTO new_email;
+  INSERT INTO Employees VALUES (new_eid, ename, new_email, primary_contact, secondary_contact, null, did);
   CASE
-    WHEN kind = 'junior' OR 'Junior' THEN
+    WHEN kind = 'junior' OR kind = 'Junior' THEN
       INSERT INTO Junior VALUES (new_eid);
-    WHEN kind = 'senior' OR 'Senior' THEN
+    WHEN kind = 'senior' OR kind = 'Senior' THEN
+      INSERT INTO Booker VALUES (new_eid);
       INSERT INTO Senior VALUES (new_eid);
-    WHEN kind = 'manager' OR 'Manager' THEN
+    WHEN kind = 'manager' OR kind = 'Manager' THEN
+      INSERT INTO Booker VALUES (new_eid);
       INSERT INTO Manager VALUES (new_eid);
   END CASE;
 END
@@ -70,7 +73,7 @@ CREATE OR REPLACE PROCEDURE remove_employee
 AS $$
 BEGIN
   Update Employees
-  SET resigned_date = date
+  SET resigned_date = resignation_date
   WHERE eid = selected_eid;
 END
 $$ LANGUAGE plpgsql;
@@ -238,6 +241,63 @@ BEGIN
     RETURN NEW;
   END IF;
 END
+$$ LANGUAGE plpsql;
+
+------------
+-- Health --
+------------
+
+-- Replaced to a PROCEDURE for data usage. --
+-- Needs to overwrite current temperatures --
+CREATE OR REPLACE PROCEDURE declare_health
+  (IN new_eid INT, IN new_date DATE, IN new_temperature NUMERIC)
+AS $$
+DECLARE
+    fever BIT := '0';
+BEGIN
+    DELETE FROM healthdeclaration
+    WHERE eid = new_eid AND date = new_date;
+    IF new_temperature > 37.5
+        THEN fever := '1';
+    END IF;
+    INSERT INTO healthdeclaration VALUES (new_eid, new_date, new_temperature, fever);
+END;
+$$ LANGUAGE plpgsql;
+
+/*
+-- Replaced to a PROCEDURE for data usage. --
+CREATE OR REPLACE FUNCTION declare_health
+  (IN eid INT, IN date DATE, IN temp NUMERIC) 
+RETURNS VOID AS $$
+    DECLARE 
+        fever BIT := '0';
+    BEGIN
+        IF temp > 37.5
+            THEN fever := '1';
+        END IF;
+        INSERT INTO healthdeclaration
+        VALUES (eid, date, temp, fever);
+    END;
+$$ LANGUAGE plpgsql;
+
+*/
+
+CREATE OR REPLACE FUNCTION contact_tracing
+  (IN e_id INT)
+RETURNS TABLE (eid INT) AS $$
+    BEGIN
+    SELECT v.eid
+        FROM joins u, joins v, healthdeclaration h
+        WHERE h.eid = e_id
+            AND h.fever = '1'
+            AND u.eid = e_id
+            AND v.eid <> e_id
+            AND u.room = v.room
+            AND u.floor = v.floor
+            AND u.time = v.time
+            AND u.date = v.date
+            AND v.date >= D - interval '3 day';
+    END;
 $$ LANGUAGE plpgsql;
 
 -----------
@@ -335,6 +395,32 @@ $$ LANGUAGE plpgsql;
 -----------
 -- Basic --
 -----------
+/*
+CREATE OR REPLACE FUNCTION is_department_empty()
+RETURNS TRIGGER AS $$
+DECLARE
+  employee_count INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO employee_count
+  FROM Employees E, Department D
+  WHERE E.did = D.did;
+
+  IF employee_count = 0 THEN
+    RETURN NEW;
+  ELSE
+    RAISE NOTICE '% Department is not empty.', D.dname;
+    RETURN NULL;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER check_department_empty
+BEFORE DELETE ON Departments
+FOR EACH ROW EXECUTE FUNCTION is_department_empty();
+*/
+
+
+
 
 -----------
 -- Core --

@@ -14,7 +14,8 @@ CREATE TABLE Employees (
   eid INTEGER,
   ename TEXT,
   email TEXT,
-  contact TEXT,
+  primary_contact TEXT,
+  secondary_contact TEXT,
   resigned_date DATE,
   did INTEGER NOT NULL,
   PRIMARY KEY (eid),
@@ -58,7 +59,7 @@ CREATE TABLE Manager (
 CREATE TABLE HealthDeclaration (
   eid INTEGER,
   date DATE,
-  temp NUMERIC,
+  temp NUMERIC NOT NULL,
   fever BIT,
   PRIMARY KEY (eid, date),
   FOREIGN KEY (eid) REFERENCES Employees(eid)
@@ -70,7 +71,7 @@ CREATE TABLE Updates (
   eid INTEGER,
   date DATE,
   new_cap INTEGER NOT NULL,
-  PRIMARY KEY (room, floor, date),
+  PRIMARY KEY (room, floor, eid, date),
   FOREIGN KEY (room, floor) REFERENCES MeetingRooms (room, floor),
   FOREIGN KEY (eid) REFERENCES Manager (eid)
 );
@@ -98,3 +99,29 @@ CREATE TABLE Joins (
   FOREIGN KEY (eid) REFERENCES Employees (eid),
   FOREIGN KEY (room, floor, time, date) REFERENCES Sessions (room, floor, time, date) ON DELETE CASCADE
 );
+
+/*
+CREATE TABLE Approves (
+  aid INTEGER,
+  eid INTEGER,
+  room INTEGER,
+  floor INTEGER,
+  time TIME,
+  date DATE,
+  PRIMARY KEY (room, floor, time, date),
+  FOREIGN KEY (aid) REFERENCES Manager (eid),
+  FOREIGN KEY (eid) REFERENCES Employees (eid),
+  FOREIGN KEY (room, floor, time, date) REFERENCES Sessions (room, floor, time, date)
+);
+
+CREATE TABLE Books (
+  room INTEGER,
+  floor INTEGER,
+  time TIME,
+  date DATE,
+  bid INTEGER NOT NULL,
+  PRIMARY KEY (room, floor, time, date),
+  FOREIGN KEY (bid) REFERENCES Booker (eid);
+);
+*/
+

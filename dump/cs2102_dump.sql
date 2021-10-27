@@ -1,7 +1,3 @@
-----------------------------------------------------------------
------------------------------ DATA -----------------------------
-----------------------------------------------------------------
-
 --
 -- Data for Name: departments
 --
@@ -17,8 +13,9 @@ INSERT INTO departments (did, dname) VALUES (8, 'Product Management');
 INSERT INTO departments (did, dname) VALUES (9, 'Business Development');
 INSERT INTO departments (did, dname) VALUES (10, 'Legal');
 
+
 --
--- Data for Name: employees
+-- Data for Name: employees; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 INSERT INTO employees (eid, ename, email, primary_contact, secondary_contact, resigned_date, did) VALUES (1, 'Aiam Repeated', 'Aiam Repeated1@gmail.com', '9841052003', '0398996323', NULL, 1);
@@ -2432,50 +2429,4 @@ INSERT INTO updates (room, floor, eid, date, new_cap) VALUES (35, 14, 82, '2021-
 INSERT INTO updates (room, floor, eid, date, new_cap) VALUES (27, 5, 91, '2021-01-12', 25);
 INSERT INTO updates (room, floor, eid, date, new_cap) VALUES (32, 2, 5, '2021-01-19', 70);
 INSERT INTO updates (room, floor, eid, date, new_cap) VALUES (8, 5, 96, '2021-01-21', 87);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
