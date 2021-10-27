@@ -26,11 +26,11 @@ $$ LANGUAGE plpgsql;
 
 ---- Add Room ----
 CREATE OR REPLACE PROCEDURE add_room
-  (floor INTEGER, room INTEGER, rname TEXT, capacity INTEGER, did INTEGER, eid INTEGER)
+  (floor INTEGER, room INTEGER, rname TEXT, capacity INTEGER, did INTEGER, eid INTEGER, added_date DATE)
 AS $$
 BEGIN
   INSERT INTO MeetingRooms VALUES (room, floor, rname, did);
-  INSERT INTO Updates VALUES (room, floor, eid, CURRENT_DATE, capacity);
+  INSERT INTO Updates VALUES (room, floor, eid, added_date, capacity);
 END
 $$ LANGUAGE plpgsql;
 
@@ -73,7 +73,7 @@ CREATE OR REPLACE PROCEDURE remove_employee
 AS $$
 BEGIN
   Update Employees
-  SET resigned_date = date
+  SET resigned_date = resignation_date
   WHERE eid = selected_eid;
 END
 $$ LANGUAGE plpgsql;
