@@ -27,7 +27,7 @@ sqlString = ""
 room_floor = [(8, 5), (36, 12), (50, 14), (8, 7), (35, 4), (32, 15), (19, 1), (35, 2), (48, 11), (40, 9), (44, 5), (11, 4), (44, 4), (10, 11), (42, 6), (10, 13), (27, 5), (29, 9), (2, 1), (27, 9), (11, 15), (27, 8), (13, 15), (2, 8), (28, 3), (37, 13), (37, 6), (48, 13), (35, 14), (35, 3), (12, 1), (4, 13), (26, 8), (1, 10), (47, 15), (32, 2), (26, 13), (21, 13), (46, 6), (28, 2), (11, 13), (34, 1), (31, 14), (18, 13), (8, 8), (21, 5), (31, 1), (36, 15), (31, 3), (19, 8)]
 
 # Managers
-manager_list = [3, 5, 12, 13, 23, 24, 25, 31, 39, 45, 47, 56, 64, 70, 81, 82, 85, 91, 96]
+manager_list = [None, None, None, None, 3, 5, 12, 13, 23, 24, 25, 31, 39, 45, 47, 56, 64, 70, 81, 82, 85, 91, 96]
 
 # Bookers
 booker_list = [2, 3, 5, 9, 10, 11, 12, 13, 19, 20, 21, 22, 23, 24, 25, 28, 29, 31, 36, 37, 39, 41, 44, 45, 47, 48, 49, 52, 54, 56, 58, 60, 62, 63, 64, 66, 67, 68, 70, 71, 74, 75, 78, 81, 82, 83, 84, 85, 86, 87, 88, 89, 91, 93, 96]
@@ -62,13 +62,18 @@ for num in range(100):
   randDate = random.randrange(0, len(booking_dates))
   randManager = random.randrange(0, len(manager_list))
   randBooker = random.randrange(0, len(booker_list))
+  manager = manager_list[randManager]
+  if (manager == None):
+    manager = "null"
+  else:
+    manager = str(manager)
 
   obj = Session(
     str(room_floor[randRoom][0]),
     str(room_floor[randRoom][1]),
     str(time_of_day[randTime]),
     str(booking_dates[randDate]),
-    str(manager_list[randManager]),
+    manager,
     str(booker_list[randBooker]))
 
   line = "INSERT INTO Sessions VALUES ("
