@@ -109,15 +109,6 @@ CREATE OR REPLACE PROCEDURE book_room
   startTime TIME, endTime TIME, id INTEGER)
 AS $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM sessions S
-    WHERE s.floor = floor_number 
-      AND s.room = room_number
-      AND s.date = meet_date
-      AND s.time >= startTime
-      AND s.time < endTime
-  ) THEN
     WITH RECURSIVE insertSession AS (
     SELECT startTime AS time
     UNION ALL
@@ -128,7 +119,6 @@ BEGIN
     INSERT INTO sessions (room, floor, time , date, beid)
     SELECT room_number, floor_number, time, meet_date, id
     FROM insertSession;
-  END IF;
 END
 $$ LANGUAGE plpgsql;
 
@@ -173,18 +163,83 @@ CREATE OR REPLACE PROCEDURE leave_meeting
   startTime TIME, endTime TIME, id INTEGER)
 AS $$
 BEGIN
-
+  DELETE FROM Joins j
+  WHERE j.floor = floor_number
+  AND j.room = room_number
+  AND j.date = meet_date
+  AND j.time >= startTime
+  AND j.time < endTime;
 END
-$$ LANGUAGE plpsql;
+$$ LANGUAGE plpgsql;
+
 ---- approve_meeting ----
 CREATE OR REPLACE PROCEDURE approve_meeting
   (floor_number INTEGER, room_number INTEGER, meet_date DATE, 
   startTime TIME, endTime TIME, id INTEGER)
 AS $$
 BEGIN
-
+  UPDATE Sessions s
+  SET meid = id
+  WHERE s.floor = floor_number 
+    AND s.room = room_number
+    AND s.date = meet_date
+    AND s.time >= startTime
+    AND s.time < endTime
+    AND s.beid IN  (
+      SELECT e.eid 
+      FROM Employees e
+      WHERE did IN (
+        SELECT e2.did
+        FROM Employees e2 
+        JOIN Manager m
+        ON e2.eid = m.eid
+        WHERE e2.eid = s.beid
+      )
+    );
 END
-$$ LANGUAGE plpsql;
+$$ LANGUAGE plpgsql;
+
+---------------------------
+---- trigger functions ----
+---------------------------
+---- check_joining ----
+CREATE OR REPLACE FUNCTION check_joining()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM Sessions s
+    WHERE s.floor = NEW.floor
+    AND s.room = NEW.room
+    AND s.date = NEW.date
+    AND s.time = NEW.time
+    AND s.meid IS NOT NULL
+  ) THEN
+  RETURN NEW;
+  ELSE
+    RETURN OLD;
+  END IF;
+END
+$$ LANGUAGE plpgsql;
+
+---- check_approval ----
+CREATE OR REPLACE FUNCTION check_approval()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM Sessions s
+    WHERE s.floor = NEW.floor
+    AND s.room = NEW.room
+    AND s.date = NEW.date
+    AND s.time = NEW.time
+    AND s.meid IS NULL
+  ) THEN
+    RETURN OLD;
+  ELSE
+    RETURN NEW;
+  END IF;
+END
+$$ LANGUAGE plpgsql;
+
 -----------
 -- Admin --
 -----------
@@ -281,3 +336,18 @@ $$ LANGUAGE plpgsql;
 -- Basic --
 -----------
 
+-----------
+-- Core --
+-----------
+
+---- check_join ----
+CREATE TRIGGER check_join
+BEFORE INSERT ON Joins
+FOR EACH ROW EXECUTE FUNCTION
+  check_joining();
+
+---- check_approve ----
+CREATE TRIGGER check_approve
+BEFORE DELETE ON Joins
+FOR EACH ROW EXECUTE FUNCTION
+  check_approval();
