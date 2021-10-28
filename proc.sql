@@ -419,8 +419,36 @@ BEFORE DELETE ON Departments
 FOR EACH ROW EXECUTE FUNCTION is_department_empty();
 */
 
+CREATE OR REPLACE FUNCTION is_employee_retired()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF EXISTS (SELECT *
+      FROM Employees E
+      WHERE E.eid = NEW.eid AND E.resignation_date < NEW.date
+    ) THEN
+      RAISE NOTICE '% Employee has retired', NEW.eid;
+      RETURN NULL;
+  ELSE
+    RETURN NEW;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
 
+CREATE TRIGGER check_retired_Health_Declaration
+BEFORE INSERT ON HealthDeclaration
+FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
 
+CREATE TRIGGER check_retired_Updates
+BEFORE INSERT ON Updates
+FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
+
+CREATE TRIGGER check_retired_Sessions
+BEFORE INSERT ON Sessions
+FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
+
+CREATE TRIGGER check_retired_Joins
+BEFORE INSERT ON Joins
+FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
 
 -----------
 -- Core --
