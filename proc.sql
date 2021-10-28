@@ -209,7 +209,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION check_joining()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF EXISTS (
+  IF NOT EXISTS (
     SELECT 1 FROM Sessions s
     WHERE s.floor = NEW.floor
     AND s.room = NEW.room
@@ -217,9 +217,18 @@ BEGIN
     AND s.time = NEW.time
     AND s.meid IS NOT NULL
   ) THEN
-  RETURN NEW;
+      RETURN OLD;
+  ELSEIF EXISTS (
+    SELECT 1 
+    FROM healthDeclaration h
+    WHERE h.eid = NEW.beid
+    AND h.fever = '1'
+    AND h.date >= NEW.date - interval '7 day'
+    AND h.date <= NEW.date + interval '1 day'
+  ) THEN
+      RETURN OLD;
   ELSE
-    RETURN OLD;
+    RETURN NEW;
   END IF;
 END
 $$ LANGUAGE plpgsql;
@@ -242,6 +251,31 @@ BEGIN
   END IF;
 END
 $$ LANGUAGE plpsql;
+
+---- check_booking ----
+CREATE OR REPLACE FUNCTION check_booking()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 
+    FROM healthDeclaration h
+    WHERE h.eid = NEW.beid
+    AND h.fever = '1'
+    AND h.date >= NEW.date - interval '7 day'
+    AND h.date < NEW.date
+  ) THEN
+    RETURN OLD;
+  ELSEIF EXISTS (
+    SELECT 1
+    FROM Junior j
+    WHERE j.eid = NEW.beid
+  ) THEN
+      RETURN OLD;
+  ELSE 
+    RETURN NEW;
+  END IF;
+END
+$$ LANGUAGE plpgsql;
 
 ------------
 -- Health --
@@ -465,3 +499,9 @@ CREATE TRIGGER check_approve
 BEFORE DELETE ON Joins
 FOR EACH ROW EXECUTE FUNCTION
   check_approval();
+
+---- check_book ----
+CREATE TRIGGER check_book
+BEFORE INSERT ON Sessions
+FOR EACH ROW EXECUTE FUNCTION
+  check_booking();
