@@ -52,6 +52,7 @@ DECLARE
   new_email TEXT;
 BEGIN
   SELECT COALESCE(MAX(eid), 0) + 1 INTO new_eid FROM Employees;
+  SELECT REPLACE(ename, ' ', '_') INTO ename;
   SELECT CONCAT(ename, new_eid, '@gmail.com') INTO new_email;
   INSERT INTO Employees VALUES (new_eid, ename, new_email, primary_contact, secondary_contact, null, did);
   CASE
@@ -418,7 +419,8 @@ BEGIN
       AND s.date >= start_date
       AND m_employee_id IN (
         SELECT eid FROM Manager
-      );
+      )
+    ORDER BY s.date ASC, s.time ASC;
 END;
 $$ LANGUAGE plpgsql;
 
