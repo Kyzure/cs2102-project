@@ -299,24 +299,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-/*
--- Replaced to a PROCEDURE for data usage. --
-CREATE OR REPLACE FUNCTION declare_health
-  (IN eid INT, IN date DATE, IN temp NUMERIC) 
-RETURNS VOID AS $$
-    DECLARE 
-        fever BIT := '0';
-    BEGIN
-        IF temp > 37.5
-            THEN fever := '1';
-        END IF;
-        INSERT INTO healthdeclaration
-        VALUES (eid, date, temp, fever);
-    END;
-$$ LANGUAGE plpgsql;
-
-*/
-
 CREATE OR REPLACE FUNCTION contact_tracing
   (IN e_id INT)
 RETURNS TABLE (eid INT) AS $$
