@@ -460,9 +460,9 @@ RETURNS TRIGGER AS $$
 BEGIN
   IF EXISTS (SELECT *
       FROM Employees E
-      WHERE E.eid = NEW.eid AND E.resignation_date < NEW.date
+      WHERE E.eid = NEW.eid AND E.resigned_date < NEW.date
     ) THEN
-      RAISE NOTICE '% Employee has retired', NEW.eid;
+      RAISE NOTICE 'Employee % has retired', NEW.eid;
       RETURN NULL;
   ELSE
     RETURN NEW;
