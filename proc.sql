@@ -285,7 +285,7 @@ $$ LANGUAGE plpgsql;
 -- Replaced to a PROCEDURE for data usage. --
 -- Needs to overwrite current temperatures --
 CREATE OR REPLACE PROCEDURE declare_health
-  (IN new_eid INT, IN new_date DATE, IN new_temperature NUMERIC)
+(IN new_eid INT, IN new_date DATE, IN new_temperature NUMERIC)
 AS $$
 DECLARE
     fever BIT := '0';
@@ -295,27 +295,33 @@ BEGIN
     IF new_temperature > 37.5
         THEN fever := '1';
     END IF;
-    INSERT INTO healthdeclaration VALUES (new_eid, new_date, new_temperature, fever);
+    INSERT INTO healthdeclaration
+    VALUES (new_eid, new_date, new_temperature, fever);
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION contact_tracing
-  (IN e_id INT)
+CREATE OR REPLACE FUNCTION contact_tracing(IN e_id INT)
 RETURNS TABLE (eid INT) AS $$
+    DECLARE
+        D Date ;
     BEGIN
-    SELECT v.eid
-        FROM joins u, joins v, healthdeclaration h
-        WHERE h.eid = e_id
-            AND h.fever = '1'
-            AND u.eid = e_id
+    select MAX(DATE) INTO D 
+            from healthdeclaration h
+            where fever = '1'
+                AND h.eid = e_id
+            group by h.eid;
+    RETURN QUERY SELECT v.eid
+        FROM joins u, joins v
+        WHERE u.eid = e_id
             AND v.eid <> e_id
             AND u.room = v.room
             AND u.floor = v.floor
             AND u.time = v.time
             AND u.date = v.date
+            AND v.date <= D
             AND v.date >= D - interval '3 day';
     END;
-$$ LANGUAGE plpgsql;
+$$ Language plpgsql;
 
 -----------
 -- Admin --
@@ -489,3 +495,54 @@ CREATE TRIGGER check_book
 BEFORE INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION
   check_booking();
+
+---------------------
+-- Contact Tracing --
+---------------------
+
+---- remove_close_contacts ----
+CREATE OR REPLACE FUNCTION remove_close_contacts()
+RETURNS TRIGGER AS $$
+DECLARE
+        D Date ;
+BEGIN
+    select MAX(DATE) INTO D 
+            from healthdeclaration h
+            where fever = '1'
+                AND h.eid = NEW.e_id
+            group by h.eid;
+
+    DELETE FROM joins j
+    WHERE j.eid in (SELECT * 
+                    FROM contact_tracing(NEW.eid))
+        AND j.date >= D
+        AND j.date <= D + interval '7 day';
+END;
+$$ Language plpgsql;
+
+CREATE TRIGGER trace_contacts
+AFTER INSERT ON healthdeclaration
+FOR EACH ROW WHEN (NEW.fever = '1')
+EXECUTE FUNCTION remove_close_contacts();
+
+---- remove_booked_meetings ----
+CREATE OR REPLACE FUNCTION remove_booked_meetings()
+RETURNS TRIGGER AS $$
+BEGIN
+    DELETE FROM SESSIONS s
+    WHERE beid = NEW.eid;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER remove_bookings
+AFTER INSERT ON healthdeclaration
+FOR EACH ROW WHEN (NEW.fever = '1')
+EXECUTE FUNCTION remove_booked_meetings();
+
+
+
+
+
+
+
+
