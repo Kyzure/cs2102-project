@@ -251,7 +251,7 @@ BEGIN
     RETURN NEW;
   END IF;
 END
-$$ LANGUAGE plpsql;
+$$ LANGUAGE plpgsql;
 
 ---- check_booking ----
 CREATE OR REPLACE FUNCTION check_booking()
