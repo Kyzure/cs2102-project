@@ -458,6 +458,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION is_booker_or_manager_retired()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF EXISTS (SELECT *
+      FROM Employees E
+      WHERE E.eid = NEW.beid AND E.resigned_date <= NEW.date
+    ) THEN
+      RAISE NOTICE 'Employee % has retired', NEW.beid;
+      RETURN NULL;
+  ELSEIF EXISTS (SELECT *
+    FROM Employees E
+    WHERE E.eid = NEW.meid AND E.resigned_date <= NEW.date
+  ) THEN
+      RAISE NOTICE 'Employee % has retired', NEW.meid;
+      RETURN NULL;
+  ELSE
+    RETURN NEW;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TRIGGER check_retired_Health_Declaration
 BEFORE INSERT ON HealthDeclaration
 FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
@@ -468,7 +489,7 @@ FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
 
 CREATE TRIGGER check_retired_Sessions
 BEFORE INSERT ON Sessions
-FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
+FOR EACH ROW EXECUTE FUNCTION is_booker_or_manager_retired();
 
 CREATE TRIGGER check_retired_Joins
 BEFORE INSERT ON Joins
