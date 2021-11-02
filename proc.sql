@@ -222,7 +222,7 @@ BEGIN
   ELSEIF EXISTS (
     SELECT 1 
     FROM healthDeclaration h
-    WHERE h.eid = NEW.beid
+    WHERE h.eid = NEW.eid
     AND h.fever = '1'
     AND h.date >= NEW.date - interval '7 day'
     AND h.date <= NEW.date + interval '1 day'
@@ -499,7 +499,6 @@ FOR EACH ROW EXECUTE FUNCTION
 ---------------------
 -- Contact Tracing --
 ---------------------
-
 ---- remove_close_contacts ----
 CREATE OR REPLACE FUNCTION remove_close_contacts()
 RETURNS TRIGGER AS $$
@@ -509,7 +508,7 @@ BEGIN
     select MAX(DATE) INTO D 
             from healthdeclaration h
             where fever = '1'
-                AND h.eid = NEW.e_id
+                AND h.eid = NEW.eid
             group by h.eid;
 
     DELETE FROM joins j
@@ -517,6 +516,8 @@ BEGIN
                     FROM contact_tracing(NEW.eid))
         AND j.date >= D
         AND j.date <= D + interval '7 day';
+    
+    RETURN NULL;
 END;
 $$ Language plpgsql;
 
@@ -531,6 +532,7 @@ RETURNS TRIGGER AS $$
 BEGIN
     DELETE FROM SESSIONS s
     WHERE beid = NEW.eid;
+    RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -538,7 +540,6 @@ CREATE TRIGGER remove_bookings
 AFTER INSERT ON healthdeclaration
 FOR EACH ROW WHEN (NEW.fever = '1')
 EXECUTE FUNCTION remove_booked_meetings();
-
 
 
 
