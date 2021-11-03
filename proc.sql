@@ -321,8 +321,11 @@ CREATE OR REPLACE FUNCTION add_booker()
 RETURNS TRIGGER AS $$
 BEGIN
   IF (OLD.meid IS NULL AND NEW.meid iS NOT NULL)
-  THEN CALL join_meeting(NEW.beid);
+  THEN CALL join_meeting(
+    NEW.floor, NEW.room, NEW.date, NEW.time, 
+    NEW.time + interval '1 hour', NEW.beid);
   END IF;
+  RETURN NEW;
 END
 $$ LANGUAGE plpgsql;
 
@@ -555,7 +558,7 @@ FOR EACH ROW EXECUTE FUNCTION
 
 ---- check_approve ----
 CREATE TRIGGER check_approve
-BEFORE INSERT ON Joins
+BEFORE DELETE ON Joins
 FOR EACH ROW EXECUTE FUNCTION
   check_approval();
 
