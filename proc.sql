@@ -192,12 +192,12 @@ BEGIN
     AND s.beid IN  (
       SELECT e.eid 
       FROM Employees e
-      WHERE did IN (
+      WHERE e.did IN (
         SELECT e2.did
         FROM Employees e2 
         JOIN Manager m
         ON e2.eid = m.eid
-        WHERE e2.eid = s.beid
+        WHERE e2.eid = id
       )
     );
 END
@@ -225,9 +225,28 @@ BEGIN
     WHERE h.eid = NEW.eid
     AND h.fever = '1'
     AND h.date >= NEW.date - interval '7 day'
-    AND h.date <= NEW.date + interval '1 day'
+    AND h.date <= NEW.date
   ) THEN
       RETURN OLD;
+  ELSEIF EXISTS (
+    SELECT 1
+      FROM joins u, joins v
+      WHERE u.eid = NEW.eid
+          AND v.eid <> NEW.eid
+          AND u.room = v.room
+          AND u.floor = v.floor
+          AND u.time = v.time
+          AND u.date = v.date
+          AND v.date <= NEW.date
+          AND v.date >= NEW.date - interval '3 day'
+          AND v.eid IN (
+            SELECT h.eid FROM healthdeclaration h
+            WHERE fever = '1'
+            AND h.date <= NEW.date
+            AND h.date >= NEW.date - interval '3 day'
+          )
+  ) THEN
+    RETURN OLD;
   ELSE
     RETURN NEW;
   END IF;
@@ -263,7 +282,7 @@ BEGIN
     WHERE h.eid = NEW.beid
     AND h.fever = '1'
     AND h.date >= NEW.date - interval '7 day'
-    AND h.date < NEW.date
+    AND h.date <= NEW.date
   ) THEN
     RETURN OLD;
   ELSEIF EXISTS (
@@ -272,8 +291,37 @@ BEGIN
     WHERE j.eid = NEW.beid
   ) THEN
       RETURN OLD;
+  ELSEIF EXISTS (
+    SELECT 1
+      FROM joins u, joins v
+      WHERE u.eid = NEW.beid
+          AND v.eid <> NEW.beid
+          AND u.room = v.room
+          AND u.floor = v.floor
+          AND u.time = v.time
+          AND u.date = v.date
+          AND v.date <= NEW.date
+          AND v.date >= NEW.date - interval '3 day'
+          AND v.eid IN (
+            SELECT h.eid FROM healthdeclaration h
+            WHERE fever = '1'
+            AND h.date <= NEW.date
+            AND h.date >= NEW.date - interval '3 day'
+          )
+  ) THEN
+    RETURN OLD;
   ELSE 
     RETURN NEW;
+  END IF;
+END
+$$ LANGUAGE plpgsql;
+
+---- add_booker ----
+CREATE OR REPLACE FUNCTION add_booker()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF (OLD.meid IS NULL AND NEW.meid iS NOT NULL)
+  THEN CALL join_meeting(NEW.beid);
   END IF;
 END
 $$ LANGUAGE plpgsql;
@@ -507,7 +555,7 @@ FOR EACH ROW EXECUTE FUNCTION
 
 ---- check_approve ----
 CREATE TRIGGER check_approve
-BEFORE DELETE ON Joins
+BEFORE INSERT ON Joins
 FOR EACH ROW EXECUTE FUNCTION
   check_approval();
 
@@ -516,6 +564,13 @@ CREATE TRIGGER check_book
 BEFORE INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION
   check_booking();
+
+---- add_book ----
+CREATE TRIGGER add_book
+AFTER UPDATE ON Sessions
+FOR EACH ROW EXECUTE FUNCTION
+  add_booker();
+
 
 ---------------------
 -- Contact Tracing --
