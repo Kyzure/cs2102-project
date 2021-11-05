@@ -43,26 +43,35 @@ CREATE OR REPLACE PROCEDURE add_room
   (floor INTEGER, room INTEGER, rname TEXT, capacity INTEGER, did INTEGER, eid INTEGER, added_date DATE)
 AS $$
 BEGIN
-  IF added_date <= CURRENT_DATE
+  IF added_date > CURRENT_DATE
     THEN
-      INSERT INTO MeetingRooms VALUES (room, floor, rname, did);
-      INSERT INTO Updates VALUES (room, floor, eid, added_date, capacity);
+      RAISE NOTICE '% is not a current or past date', added_date;      
   ELSE
-    RAISE NOTICE '% is not a current or past date', added_date;
+    INSERT INTO MeetingRooms VALUES (room, floor, rname, did);
+    INSERT INTO Updates VALUES (room, floor, eid, added_date, capacity);
   END IF;
 END
 $$ LANGUAGE plpgsql;
 
 ---- Change Capacity ----
 CREATE OR REPLACE PROCEDURE change_capacity
-  (floor INTEGER, room INTEGER, eid INTEGER, capacity INTEGER, date DATE)
+  (_floor INTEGER, _room INTEGER, _eid INTEGER, _capacity INTEGER, _date DATE)
 AS $$
 BEGIN
-  IF date <= CURRENT_DATE
+  IF _date > CURRENT_DATE
     THEN
-    INSERT INTO Updates VALUES (room, floor, eid, date, capacity);
+      RAISE NOTICE '% is not a current or past date', _date;
+  ELSEIF _eid NOT IN (SELECT * FROM Manager)
+    THEN
+      RAISE NOTICE '% is not a manager', _eid;
+  ELSEIF NOT EXISTS (
+    SELECT *
+    FROM MeetingRooms MR JOIN Employees E ON MR.did = E.did
+    WHERE _floor = MR.floor AND _room = MR.room AND _eid = E.eid
+  ) THEN
+    RAISE NOTICE 'MeetingRoom belongs to different department from %', _eid;
   ELSE
-    RAISE NOTICE '% is not a current or past date', date;
+    INSERT INTO Updates VALUES (_room, _floor, _eid, _date, _capacity);
   END IF;
 END
 $$ LANGUAGE plpgsql;
@@ -547,7 +556,7 @@ BEGIN
       FROM Employees E
       WHERE E.eid = NEW.beid AND E.resigned_date <= NEW.date
     ) THEN
-      RAISE NOTICE 'Employee % has retired', NEW.beid;
+      RAISE NOTICE 'Booker % has retired', NEW.beid;
       RETURN NULL;
   ELSEIF EXISTS (SELECT *
     FROM Employees E
@@ -561,21 +570,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION is_MeetingRooms_same_department_as_Manager()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF EXISTS (SELECT *
-      FROM MeetingRooms MR JOIN Employees E ON MR.did = E.did JOIN Manager M ON E.eid = M.eid
-      WHERE MR.room = NEW.room AND MR.floor = NEW.floor AND E.eid = NEW.eid
-    ) THEN
-      RETURN NEW;
-  ELSE
-    RAISE NOTICE 'Failed to Update room % floor %', NEW.room, NEW.floor;
-    RETURN NULL;
-  END IF;
-END;
-$$ LANGUAGE plpgsql;
-
 CREATE TRIGGER check_retired_Health_Declaration
 BEFORE INSERT ON HealthDeclaration
 FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
@@ -583,10 +577,6 @@ FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
 CREATE TRIGGER check_retired_Updates
 BEFORE INSERT ON Updates
 FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
-
-CREATE TRIGGER check_MeetingRooms_same_department_as_Manager
-BEFORE INSERT ON Updates
-FOR EACH ROW EXECUTE FUNCTION is_MeetingRooms_same_department_as_Manager();
 
 CREATE TRIGGER check_retired_Sessions
 BEFORE INSERT OR UPDATE ON Sessions
