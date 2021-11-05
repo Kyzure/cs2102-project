@@ -29,8 +29,13 @@ CREATE OR REPLACE PROCEDURE add_room
   (floor INTEGER, room INTEGER, rname TEXT, capacity INTEGER, did INTEGER, eid INTEGER, added_date DATE)
 AS $$
 BEGIN
-  INSERT INTO MeetingRooms VALUES (room, floor, rname, did);
-  INSERT INTO Updates VALUES (room, floor, eid, added_date, capacity);
+  IF added_date <= CURRENT_DATE
+    THEN
+      INSERT INTO MeetingRooms VALUES (room, floor, rname, did);
+      INSERT INTO Updates VALUES (room, floor, eid, added_date, capacity);
+  ELSE
+    RAISE NOTICE '% is not a current or past date', added_date;
+  END IF;
 END
 $$ LANGUAGE plpgsql;
 
@@ -39,7 +44,12 @@ CREATE OR REPLACE PROCEDURE change_capacity
   (floor INTEGER, room INTEGER, eid INTEGER, capacity INTEGER, date DATE)
 AS $$
 BEGIN
-  INSERT INTO Updates VALUES (room, floor, eid, date, capacity);
+  IF date <= CURRENT_DATE
+    THEN
+    INSERT INTO Updates VALUES (room, floor, eid, date, capacity);
+  ELSE
+    RAISE NOTICE '% is not a current or past date', date;
+  END IF;
 END
 $$ LANGUAGE plpgsql;
 
@@ -473,30 +483,6 @@ $$ LANGUAGE plpgsql;
 -----------
 -- Basic --
 -----------
-/*
-CREATE OR REPLACE FUNCTION is_department_empty()
-RETURNS TRIGGER AS $$
-DECLARE
-  employee_count INTEGER;
-BEGIN
-  SELECT COUNT(*) INTO employee_count
-  FROM Employees E, Department D
-  WHERE E.did = D.did;
-
-  IF employee_count = 0 THEN
-    RETURN NEW;
-  ELSE
-    RAISE NOTICE '% Department is not empty.', D.dname;
-    RETURN NULL;
-  END IF;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER check_department_empty
-BEFORE DELETE ON Departments
-FOR EACH ROW EXECUTE FUNCTION is_department_empty();
-*/
-
 CREATE OR REPLACE FUNCTION is_employee_retired()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -525,7 +511,7 @@ BEGIN
     FROM Employees E
     WHERE E.eid = NEW.meid AND E.resigned_date <= NEW.date
   ) THEN
-      RAISE NOTICE 'Employee % has retired', NEW.meid;
+      RAISE NOTICE 'Manager % has retired', NEW.meid;
       RETURN NULL;
   ELSE
     RETURN NEW;
@@ -533,18 +519,47 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION is_MeetingRooms_same_department_as_Manager()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF EXISTS (SELECT *
+      FROM MeetingRooms MR JOIN Employees E ON MR.did = E.did JOIN Manager M ON E.eid = M.eid
+      WHERE MR.room = NEW.room AND MR.floor = NEW.floor AND E.eid = NEW.eid
+    ) THEN
+      RETURN NEW;
+  ELSE
+    RAISE NOTICE 'Failed to Update room % floor %', NEW.room, NEW.floor;
+    RETURN NULL;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS check_retired_Health_Declaration
+  ON HealthDeclaration;
 CREATE TRIGGER check_retired_Health_Declaration
 BEFORE INSERT ON HealthDeclaration
 FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
 
+DROP TRIGGER IF EXISTS check_retired_Updates
+  ON Updates;
 CREATE TRIGGER check_retired_Updates
 BEFORE INSERT ON Updates
 FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
 
-CREATE TRIGGER check_retired_Sessions
-BEFORE INSERT ON Sessions
-FOR EACH ROW EXECUTE FUNCTION is_booker_or_manager_retired();
+DROP TRIGGER IF EXISTS check_MeetingRooms_same_department_as_Manager
+  ON Updates;
+CREATE TRIGGER check_MeetingRooms_same_department_as_Manager
+BEFORE INSERT ON Updates
+FOR EACH ROW EXECUTE FUNCTION is_MeetingRooms_same_department_as_Manager();
 
+DROP TRIGGER IF EXISTS check_retired_Sessions
+  ON Sessions;
+CREATE TRIGGER check_retired_Sessions
+BEFORE INSERT OR UPDATE ON Sessions
+FOR EACH ROW EXECUTE FUNCTION is_Booker_or_Manager_retired();
+
+DROP TRIGGER IF EXISTS check_retired_Joins
+  ON Joins;
 CREATE TRIGGER check_retired_Joins
 BEFORE INSERT ON Joins
 FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
