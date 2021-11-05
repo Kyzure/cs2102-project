@@ -2,6 +2,10 @@
 --------------------------- FUNCTIONS --------------------------
 ----------------------------------------------------------------
 
+-- Drops --
+DROP PROCEDURE add_department, remove_department, add_room, change_capacity, add_employee, remove_employee, book_room, unbook_room, join_meeting, leave_meeting, approve_meeting, declare_health;
+DROP FUNCTION search_room, check_joining, check_approval, check_booking, add_booker, contact_tracing
+
 -----------
 -- Basic --
 -----------
@@ -195,27 +199,30 @@ CREATE OR REPLACE PROCEDURE approve_meeting
   startTime TIME, endTime TIME, id INTEGER)
 AS $$
 BEGIN
-  UPDATE Sessions s
-  SET meid = id
-  WHERE s.floor = floor_number 
-    AND s.room = room_number
-    AND s.date = meet_date
-    AND s.time >= startTime
-    AND s.time < endTime
-    AND s.meid IS NULL
-    AND EXISTS  (
-      SELECT 1
-      FROM MeetingRooms mr
-      WHERE mr.floor = floor_number
-      AND mr.room = room_number
-      AND mr.did IN (
-        SELECT e2.did
-        FROM Employees e2 
-        JOIN Manager m
-        ON e2.eid = m.eid
-        WHERE e2.eid = id
-      )
-    );
+  IF (now() < meet_date)
+  THEN 
+    UPDATE Sessions s
+    SET meid = id
+    WHERE s.floor = floor_number 
+      AND s.room = room_number
+      AND s.date = meet_date
+      AND s.time >= startTime
+      AND s.time < endTime
+      AND s.meid IS NULL
+      AND EXISTS  (
+        SELECT 1
+        FROM MeetingRooms mr
+        WHERE mr.floor = floor_number
+        AND mr.room = room_number
+        AND mr.did IN (
+          SELECT e2.did
+          FROM Employees e2 
+          JOIN Manager m
+          ON e2.eid = m.eid
+          WHERE e2.eid = id
+        )
+      );
+    END IF;
 END
 $$ LANGUAGE plpgsql;
 
@@ -244,6 +251,26 @@ BEGIN
     AND h.date <= NEW.date
   ) THEN
       RETURN OLD;
+  ELSEIF (
+    now() >= NEW.date
+  ) THEN
+  ELSEIF (
+    (SELECT COUNT (*)
+    FROM joins j
+    WHERE j.room = NEW.room
+    AND j.floor = NEW.floor
+    AND j.time = NEW.time
+    AND j.date = NEW.date) >=
+    (SELECT u.new_cap
+     FROM Updates u
+     WHERE u.room = NEW.room
+     AND u.floor = NEW.floor
+     AND u.date <= NEW.date
+     ORDER BY u.date DESC
+     LIMIT 1
+    )
+  ) THEN
+      return OLD;
   ELSEIF EXISTS (
     SELECT 1
       FROM joins u, joins v
@@ -282,6 +309,9 @@ BEGIN
     AND s.meid IS NOT NULL
   ) THEN
     RETURN OLD;
+  ELSEIF (
+    now() >= NEW.date
+  ) THEN
   ELSE
     RETURN NEW;
   END IF;
@@ -305,6 +335,10 @@ BEGIN
     SELECT 1
     FROM Junior j
     WHERE j.eid = NEW.beid
+  ) THEN
+      RETURN OLD;
+  ELSEIF (
+    now() >= NEW.date
   ) THEN
       RETURN OLD;
   ELSEIF EXISTS (
@@ -336,11 +370,9 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION add_booker()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF (OLD.meid IS NULL AND NEW.meid iS NOT NULL)
-  THEN CALL join_meeting(
+  CALL join_meeting(
     NEW.floor, NEW.room, NEW.date, NEW.time, 
     NEW.time + interval '1 hour', NEW.beid);
-  END IF;
   RETURN NEW;
 END
 $$ LANGUAGE plpgsql;
@@ -591,10 +623,15 @@ FOR EACH ROW EXECUTE FUNCTION
 
 ---- add_book ----
 CREATE TRIGGER add_book
-AFTER UPDATE ON Sessions
+AFTER INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION
   add_booker();
 
+---- check_approveDate ----
+CREATE TRIGGER add_book
+BEFORE UPDATE ON Sessions
+FOR EACH ROW EXECUTE FUNCTION
+  check_approvalDate();
 
 ---------------------
 -- Contact Tracing --
@@ -641,8 +678,30 @@ AFTER INSERT ON healthdeclaration
 FOR EACH ROW WHEN (NEW.fever = '1')
 EXECUTE FUNCTION remove_booked_meetings();
 
+-------------------------------------
+---- Check Validity of healthdec ----
+-------------------------------------
 
+CREATE OR REPLACE FUNCTION check_health_validity()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.date > CURRENT_DATE THEN 
+        RAISE NOTICE 'You cannot declare health for a future date.';
+        RETURN NULL;
+    ELSEIF NEW.temp > 43.0 THEN 
+        RAISE NOTICE 'Temperature declared is too high.';
+        RETURN NULL;
+    ELSEIF NEW.temp < 34.0 THEN 
+        RAISE NOTICE 'Temperature declared is too low.';
+        RETURN NULL;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
+CREATE TRIGGER check_health_declared
+BEFORE INSERT ON healthdeclaration
+FOR EACH ROW EXECUTE FUNCTION check_health_validity();
 
 
 
