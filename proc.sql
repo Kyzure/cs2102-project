@@ -45,17 +45,23 @@ $$ LANGUAGE plpgsql;
 
 ---- Change Capacity ----
 CREATE OR REPLACE PROCEDURE change_capacity
-  (floor INTEGER, room INTEGER, eid INTEGER, capacity INTEGER, date DATE)
+  (_floor INTEGER, _room INTEGER, _eid INTEGER, _capacity INTEGER, _date DATE)
 AS $$
 BEGIN
-  IF date > CURRENT_DATE
+  IF _date > CURRENT_DATE
     THEN
-      RAISE NOTICE '% is not a current or past date', date;
-  ELSEIF eid NOT IN (SELECT * FROM Manager)
+      RAISE NOTICE '% is not a current or past date', _date;
+  ELSEIF _eid NOT IN (SELECT * FROM Manager)
     THEN
-      RAISE NOTICE '% is not a manager', eid;
+      RAISE NOTICE '% is not a manager', _eid;
+  ELSEIF NOT EXISTS (
+    SELECT *
+    FROM MeetingRooms MR JOIN Employees E ON MR.did = E.did
+    WHERE _floor = MR.floor AND _room = MR.room AND _eid = E.eid
+  ) THEN
+    RAISE NOTICE 'MeetingRoom belongs to different department from %', _eid;
   ELSE
-    INSERT INTO Updates VALUES (room, floor, eid, date, capacity);
+    INSERT INTO Updates VALUES (_room, _floor, _eid, _date, _capacity);
   END IF;
 END
 $$ LANGUAGE plpgsql;
@@ -554,21 +560,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION is_MeetingRooms_same_department_as_Manager()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF EXISTS (SELECT *
-      FROM MeetingRooms MR JOIN Employees E ON MR.did = E.did JOIN Manager M ON E.eid = M.eid
-      WHERE MR.room = NEW.room AND MR.floor = NEW.floor AND E.eid = NEW.eid
-    ) THEN
-      RETURN NEW;
-  ELSE
-    RAISE NOTICE 'Failed to Update room % floor %', NEW.room, NEW.floor;
-    RETURN NULL;
-  END IF;
-END;
-$$ LANGUAGE plpgsql;
-
 DROP TRIGGER IF EXISTS check_retired_Health_Declaration
   ON HealthDeclaration;
 CREATE TRIGGER check_retired_Health_Declaration
@@ -580,12 +571,6 @@ DROP TRIGGER IF EXISTS check_retired_Updates
 CREATE TRIGGER check_retired_Updates
 BEFORE INSERT ON Updates
 FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
-
-DROP TRIGGER IF EXISTS check_MeetingRooms_same_department_as_Manager
-  ON Updates;
-CREATE TRIGGER check_MeetingRooms_same_department_as_Manager
-BEFORE INSERT ON Updates
-FOR EACH ROW EXECUTE FUNCTION is_MeetingRooms_same_department_as_Manager();
 
 DROP TRIGGER IF EXISTS check_retired_Sessions
   ON Sessions;

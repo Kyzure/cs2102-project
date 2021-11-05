@@ -114,3 +114,6 @@ CALL change_capacity(5, 8, 3, 10, '2025-01-01');
 
 -- Trying to change capacity as non manager --
 CALL change_capacity(5, 8, 1, 10, '2020-01-01');
+
+-- Trying to change capacity of another department --
+CALL change_capacity(14, 50, 3, 10, '2020-01-01');
