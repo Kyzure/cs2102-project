@@ -616,7 +616,7 @@ FOR EACH ROW EXECUTE FUNCTION
 CREATE TRIGGER check_book
 BEFORE INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION
-  check_booking();3r
+  check_booking();
 
 ---- add_book ----
 CREATE TRIGGER add_book
