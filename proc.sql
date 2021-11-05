@@ -3,8 +3,18 @@
 ----------------------------------------------------------------
 
 -- Drops --
-DROP PROCEDURE add_department, remove_department, add_room, change_capacity, add_employee, remove_employee, book_room, unbook_room, join_meeting, leave_meeting, approve_meeting, declare_health;
-DROP FUNCTION search_room, check_joining, check_approval, check_booking, add_booker, contact_tracing
+DROP PROCEDURE IF EXISTS add_department, remove_department, add_room, change_capacity, add_employee, remove_employee, book_room, unbook_room, join_meeting, leave_meeting, approve_meeting, declare_health CASCADE;
+
+DROP FUNCTION IF EXISTS search_room, check_joining, check_approval, check_booking, add_booker, contact_tracing, remove_close_contacts, remove_booked_meetings, check_health_validity CASCADE;
+
+DROP TRIGGER IF EXISTS check_retired_Updates ON Updates;
+DROP TRIGGER IF EXISTS check_retired_Joins ON Joins;
+DROP TRIGGER IF EXISTS check_retired_Health_Declaration ON HealthDeclaration;
+DROP TRIGGER IF EXISTS check_MeetingRooms_same_department_as_Manager ON Updates;
+DROP TRIGGER IF EXISTS check_retired_Sessions ON Sessions;
+DROP TRIGGER IF EXISTS trace_contacts ON healthdeclaration;
+DROP TRIGGER IF EXISTS remove_bookings ON healthdeclaration;
+DROP TRIGGER IF EXISTS check_health_declared ON healthdeclaration;
 
 -----------
 -- Basic --
@@ -566,32 +576,22 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS check_retired_Health_Declaration
-  ON HealthDeclaration;
 CREATE TRIGGER check_retired_Health_Declaration
 BEFORE INSERT ON HealthDeclaration
 FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
 
-DROP TRIGGER IF EXISTS check_retired_Updates
-  ON Updates;
 CREATE TRIGGER check_retired_Updates
 BEFORE INSERT ON Updates
 FOR EACH ROW EXECUTE FUNCTION is_employee_retired();
 
-DROP TRIGGER IF EXISTS check_MeetingRooms_same_department_as_Manager
-  ON Updates;
 CREATE TRIGGER check_MeetingRooms_same_department_as_Manager
 BEFORE INSERT ON Updates
 FOR EACH ROW EXECUTE FUNCTION is_MeetingRooms_same_department_as_Manager();
 
-DROP TRIGGER IF EXISTS check_retired_Sessions
-  ON Sessions;
 CREATE TRIGGER check_retired_Sessions
 BEFORE INSERT OR UPDATE ON Sessions
 FOR EACH ROW EXECUTE FUNCTION is_Booker_or_Manager_retired();
 
-DROP TRIGGER IF EXISTS check_retired_Joins
-  ON Joins;
 CREATE TRIGGER check_retired_Joins
 BEFORE INSERT ON Joins
 FOR EACH ROW EXECUTE FUNCTION is_employee_retired();

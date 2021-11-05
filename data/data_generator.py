@@ -1,23 +1,37 @@
+#################
 #### Imports ####
+#################
 import random
 
+#################
 #### Classes ####
-class Session: 
-  def __init__(self, room, floor, time, date, meid, beid): 
-    self.room = room
+#################
+class BookRoom: 
+  def __init__(self, floor, room, date, startTime, endTime, eid): 
     self.floor = floor
-    self.time = time
+    self.room = room
     self.date = date
-    self.meid = meid
-    self.beid = beid
-
-class Join: 
-  def __init__(self, eid, room, floor, time, date): 
+    self.startTime = startTime
+    self.endTime = endTime
     self.eid = eid
-    self.room = room
+
+class ApproveMeeting:
+  def __init__(self, floor, room, date, startTime, endTime, eid): 
     self.floor = floor
-    self.time = time
+    self.room = room
     self.date = date
+    self.startTime = startTime
+    self.endTime = endTime
+    self.eid = eid  
+
+class JoinMeeting: 
+  def __init__(self, floor, room, date, startTime, endTime, eid): 
+    self.floor = floor
+    self.room = room
+    self.date = date
+    self.startTime = startTime
+    self.endTime = endTime
+    self.eid = eid  
 
 class MeetingRoom:
   def __init__(self, room, floor, did): 
@@ -30,10 +44,30 @@ class Manager:
     self.eid = eid
     self.did = did
 
-#### Data ####
+class Updates:
+  def __init__(self, floor, room, eid, capacity, date): 
+    self.floor = floor
+    self.room = room
+    self.eid = eid
+    self.capacity = capacity
+    self.date = date
 
+class HealthDeclaration:
+  def __init__(self, eid, date, temp): 
+    self.eid = eid
+    self.date = date
+    self.temp = temp
+
+##############
+#### Data ####
+##############
 # Final String
 sqlString = ""
+
+# Front data
+book_room = []
+approve_meeting = []
+join_meeting = []
 
 # Bookers
 booker_list = [2, 3, 5, 9, 10, 11, 12, 13, 19, 20, 21, 22, 23, 24, 25, 28, 29, 31, 36, 37, 39, 41, 44, 45, 47, 48, 49, 52, 54, 56, 58, 60, 62, 63, 64, 66, 67, 68, 70, 71, 74, 75, 78, 81, 82, 83, 84, 85, 86, 87, 88, 89, 91, 93, 96]
@@ -41,11 +75,6 @@ booker_list = [2, 3, 5, 9, 10, 11, 12, 13, 19, 20, 21, 22, 23, 24, 25, 28, 29, 3
 # Managers
 manager_list = []
 
-manager_list.append(None)
-manager_list.append(None)
-manager_list.append(None)
-manager_list.append(None)
-manager_list.append(None)
 manager_list.append(Manager(  3,  1))
 manager_list.append(Manager(  5,  1))
 manager_list.append(Manager( 12,  1))
@@ -128,91 +157,166 @@ for i in range(24):
     hour = str(hour)
   time_of_day.append("'" + hour + ":00:00'")
 
-# Populate booking date
+## Populate booking date ##
 booking_dates = []
-for i in range(1, 29):
+declaration_dates = []
+for i in range(1, 32):
   day = i
   if (day <= 9):
     day = "0" + str(day)
   else:
     day = str(day)
-  booking_dates.append("'2021-02-" + day + "'")
-
-## Data post randomzie ##
-sessions = []
-
-joins = []
-
-## Randomizing Sessions ##
-for num in range(200):
-  randRoom = random.randrange(0, len(room_floor))
-  randTime = random.randrange(0, len(time_of_day))
-  randDate = random.randrange(0, len(booking_dates))
-  randManager = random.randrange(0, len(manager_list))
-  randBooker = random.randrange(0, len(booker_list))
-
-  room = room_floor[randRoom]
-
-  manager = None
-  for i in range(20):
-    manager = manager_list[randManager]
-    if manager != None and manager.did == room.did:
-      break
-    randManager = randManager = random.randrange(0, len(manager_list))
-
-
-  if (manager == None or manager.did != room.did):
-    manager = "null"
+  booking_dates.append("'2021-10-" + day + "'")
+  declaration_dates.append("'2021-10-" + day + "'")
+for i in range(1, 31):
+  day = i
+  tempo = i
+  if (day <= 9):
+    day = "0" + str(day)
   else:
-    manager = str(manager.eid)
+    day = str(day)
+  booking_dates.append("'2021-11-" + day + "'")
+  if tempo <= 11:
+    declaration_dates.append("'2021-11-" + day + "'")
+for i in range(1, 32):
+  day = i
+  if (day <= 9):
+    day = "0" + str(day)
+  else:
+    day = str(day)
+  booking_dates.append("'2021-12-" + day + "'")
 
-  obj = Session(
-    str(room_floor[randRoom].room),
+#####################
+#### Randomizing ####
+#####################
+
+# Note: We let them repeat, so we let SQL take care of repeated value
+# through brute force.
+
+#### HealthDeclaration ####
+for num in range(4000):
+  randEmployee = random.randrange(0, 100)
+  randDate = random.randrange(0, len(declaration_dates))
+  randTemp =  random.randrange(35, 40)
+  randTempFloat = random.randrange(1, 10)
+
+  obj = HealthDeclaration(
+    str(randEmployee),
+    str(declaration_dates[randDate]),
+    (str(randTemp) + "." + str(randTempFloat)))
+
+  line = "CALL declare_health ("
+  line += obj.eid + ", " + obj.date + ", " + obj.temp + ")\n"
+  sqlString += line
+
+# Spacing
+sqlString += "\n"
+
+#### Updates ####
+for num in range(400):
+  randRoom = random.randrange(0, len(room_floor))
+  randManager = random.randrange(0, len(manager_list))
+  randCapcity =  random.randrange(2, 100)
+  randDate = random.randrange(0, len(booking_dates))
+
+  obj = Updates(
     str(room_floor[randRoom].floor),
-    str(time_of_day[randTime]),
+    str(room_floor[randRoom].room),
+    str(manager_list[randManager].eid),
+    str(randCapcity),
+    str(booking_dates[randDate]))
+
+  line = "CALL change_capacity ("
+  line += obj.floor + ", " + obj.room + ", " + obj.eid + ", "
+  line += obj.capacity + ", " + obj.date + ")\n"
+  sqlString += line
+
+# Spacing
+sqlString += "\n"
+
+#### book_room ####
+for num in range(500):
+  randRoom = random.randrange(0, len(room_floor))
+  randDate = random.randrange(0, len(booking_dates))
+  randStartTime = random.randrange(0, len(time_of_day))
+  randEndTime = random.randrange(0, len(time_of_day))
+  randBooker = random.randrange(0, len(booker_list))
+  
+  if randStartTime > randEndTime:
+    tempz = randStartTime
+    randStartTime = randEndTime
+    randEndTime = tempz
+  elif randStartTime == randEndTime:
+      if randStartTime == 0:
+        randEndTime += 1
+      elif randEndTime == 24:
+        randStartTime -= 1
+      else:
+        randStartTime -= 1
+        randEndTime -= 1
+
+  obj = BookRoom(
+    str(room_floor[randRoom].floor),
+    str(room_floor[randRoom].room),
     str(booking_dates[randDate]),
-    manager,
+    str(time_of_day[randStartTime]),
+    str(time_of_day[randEndTime]),
     str(booker_list[randBooker]))
 
-  line = "INSERT INTO Sessions VALUES ("
-  line += obj.room + ", " + obj.floor + ", " + obj.time + ", "
-  line += obj.date + ", " + obj.meid + ", " + obj.beid + ");\n"
+  line = "CALL book_room ("
+  line += obj.floor + ", " + obj.room + ", " + obj.date + ", "
+  line += obj.startTime + ", " + obj.endTime + ", " + obj.eid + ");\n"
   sqlString += line
-  sessions.append(obj)
+  book_room.append(obj)
 
 # Spacing
 sqlString += "\n"
 
-
-## Randomizing Joins ##
-for num in range(2000):
-  randSession = random.randrange(0, len(sessions))
-  sess = sessions[randSession]
-  employee = random.randrange(1, 100)
-
-  if(sess == None):
-    continue
-
-  obj = Join(
-    str(employee),
-    str(sess.room),
-    str(sess.floor),
-    str(sess.time),
-    str(sess.date))
-
-  for j in joins:
-    if obj.eid == j.eid and obj.room == j.room and obj.floor == j.floor and obj.time == j.time and obj.date == j.date:
-      continue
+#### join_meeting ####
+for num in range(5000):
+  randBooking = random.randrange(0, len(book_room))
+  randEmployee = random.randrange(1, 101)
   
-  line = "INSERT INTO Joins VALUES ("
-  line += obj.eid + ", " + obj.room + ", " + obj.floor + ", " + obj.time + ", " + obj.date
-  line += ");\n"
+  booking = book_room[randBooking]
+
+  obj = JoinMeeting(
+    str(booking.floor),
+    str(booking.room),
+    str(booking.date),
+    str(booking.startTime),
+    str(booking.endTime),
+    str(randEmployee))
+
+  line = "CALL join_meeting ("
+  line += obj.floor + ", " + obj.room + ", " + obj.date + ", "
+  line += obj.startTime + ", " + obj.endTime + ", " + obj.eid + ");\n"
   sqlString += line
-  joins.append(obj)
+  join_meeting.append(obj)
+
+#### approve_meeting ####
+for num in range(500):
+  randBooking = random.randrange(0, len(book_room))
+  randManager = random.randrange(1, len(manager_list))
+  
+  booking = book_room[randBooking]
+
+  obj = ApproveMeeting(
+    str(booking.floor),
+    str(booking.room),
+    str(booking.date),
+    str(booking.startTime),
+    str(booking.endTime),
+    str(manager_list[randManager].eid))
+
+  line = "CALL approve_meeting ("
+  line += obj.floor + ", " + obj.room + ", " + obj.date + ", "
+  line += obj.startTime + ", " + obj.endTime + ", " + obj.eid + ");\n"
+  sqlString += line
 
 # Spacing
 sqlString += "\n"
 
+#### approve_meeting ####
 
 #### Write ####
 f = open("data.txt", "w")
