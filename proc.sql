@@ -2,6 +2,10 @@
 --------------------------- FUNCTIONS --------------------------
 ----------------------------------------------------------------
 
+-- Drops --
+DROP PROCEDURE add_department, remove_department, add_room, change_capacity, add_employee, remove_employee, book_room, unbook_room, join_meeting, leave_meeting, approve_meeting, declare_health;
+DROP FUNCTION search_room, check_joining, check_approval, check_booking, add_booker, contact_tracing
+
 -----------
 -- Basic --
 -----------
@@ -638,8 +642,30 @@ AFTER INSERT ON healthdeclaration
 FOR EACH ROW WHEN (NEW.fever = '1')
 EXECUTE FUNCTION remove_booked_meetings();
 
+-------------------------------------
+---- Check Validity of healthdec ----
+-------------------------------------
 
+CREATE OR REPLACE FUNCTION check_health_validity()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.date > CURRENT_DATE THEN 
+        RAISE NOTICE 'You cannot declare health for a future date.';
+        RETURN NULL;
+    ELSEIF NEW.temp > 43.0 THEN 
+        RAISE NOTICE 'Temperature declared is too high.';
+        RETURN NULL;
+    ELSEIF NEW.temp < 34.0 THEN 
+        RAISE NOTICE 'Temperature declared is too low.';
+        RETURN NULL;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
+CREATE TRIGGER check_health_declared
+BEFORE INSERT ON healthdeclaration
+FOR EACH ROW EXECUTE FUNCTION check_health_validity();
 
 
 
