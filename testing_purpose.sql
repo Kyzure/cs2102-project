@@ -106,31 +106,11 @@ WHERE s.eid IS NULL
   AND mr.did = 0
   AND s.date >= '2020-10-02';
 
--- Trying to add room in future
-CALL add_room(1203, 1123, 'lmao', 10, 1, 3, '2025-01-01');
+-- Trying to add room in future --
+CALL add_room(69420, 69420, 'THIS ROOM MUST NOT EXIST', 10, 1, 3, '2025-01-01');
 
--- Trying to change capacity in future
+-- Trying to change capacity in future -- 
 CALL change_capacity(5, 8, 3, 10, '2025-01-01');
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+-- Trying to change capacity as non manager --
+CALL change_capacity(5, 8, 1, 10, '2020-01-01');

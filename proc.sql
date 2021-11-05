@@ -29,12 +29,12 @@ CREATE OR REPLACE PROCEDURE add_room
   (floor INTEGER, room INTEGER, rname TEXT, capacity INTEGER, did INTEGER, eid INTEGER, added_date DATE)
 AS $$
 BEGIN
-  IF added_date <= CURRENT_DATE
+  IF added_date > CURRENT_DATE
     THEN
-      INSERT INTO MeetingRooms VALUES (room, floor, rname, did);
-      INSERT INTO Updates VALUES (room, floor, eid, added_date, capacity);
+      RAISE NOTICE '% is not a current or past date', added_date;      
   ELSE
-    RAISE NOTICE '% is not a current or past date', added_date;
+    INSERT INTO MeetingRooms VALUES (room, floor, rname, did);
+    INSERT INTO Updates VALUES (room, floor, eid, added_date, capacity);
   END IF;
 END
 $$ LANGUAGE plpgsql;
@@ -44,11 +44,14 @@ CREATE OR REPLACE PROCEDURE change_capacity
   (floor INTEGER, room INTEGER, eid INTEGER, capacity INTEGER, date DATE)
 AS $$
 BEGIN
-  IF date <= CURRENT_DATE
+  IF date > CURRENT_DATE
     THEN
-    INSERT INTO Updates VALUES (room, floor, eid, date, capacity);
+      RAISE NOTICE '% is not a current or past date', date;
+  ELSEIF eid NOT IN (SELECT * FROM Manager)
+    THEN
+      RAISE NOTICE '% is not a manager', eid;
   ELSE
-    RAISE NOTICE '% is not a current or past date', date;
+    INSERT INTO Updates VALUES (room, floor, eid, date, capacity);
   END IF;
 END
 $$ LANGUAGE plpgsql;
@@ -505,7 +508,7 @@ BEGIN
       FROM Employees E
       WHERE E.eid = NEW.beid AND E.resigned_date <= NEW.date
     ) THEN
-      RAISE NOTICE 'Employee % has retired', NEW.beid;
+      RAISE NOTICE 'Booker % has retired', NEW.beid;
       RETURN NULL;
   ELSEIF EXISTS (SELECT *
     FROM Employees E
