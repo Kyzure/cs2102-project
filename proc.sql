@@ -189,10 +189,13 @@ BEGIN
     AND s.date = meet_date
     AND s.time >= startTime
     AND s.time < endTime
-    AND s.beid IN  (
-      SELECT e.eid 
-      FROM Employees e
-      WHERE e.did IN (
+    AND s.meid IS NULL
+    AND EXISTS  (
+      SELECT 1
+      FROM MeetingRooms mr
+      WHERE mr.floor = floor_number
+      AND mr.room = room_number
+      AND mr.did IN (
         SELECT e2.did
         FROM Employees e2 
         JOIN Manager m
@@ -216,7 +219,7 @@ BEGIN
     AND s.room = NEW.room
     AND s.date = NEW.date
     AND s.time = NEW.time
-    AND s.meid IS NOT NULL
+    AND s.meid IS NULL
   ) THEN
       RETURN OLD;
   ELSEIF EXISTS (
@@ -263,7 +266,7 @@ BEGIN
     AND s.room = NEW.room
     AND s.date = NEW.date
     AND s.time = NEW.time
-    AND s.meid IS NULL
+    AND s.meid IS NOT NULL
   ) THEN
     RETURN OLD;
   ELSE
