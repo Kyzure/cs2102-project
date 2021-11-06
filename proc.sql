@@ -269,8 +269,8 @@ BEGIN
     FROM healthDeclaration h
     WHERE h.eid = NEW.eid
     AND h.fever = '1'
-    AND h.date >= NEW.date - interval '7 day'
-    AND h.date <= NEW.date
+    AND h.date >= now() - interval '7 day'
+    AND h.date <= now()
   ) THEN
       RETURN OLD;
   ELSEIF (
@@ -302,13 +302,14 @@ BEGIN
           AND u.floor = v.floor
           AND u.time = v.time
           AND u.date = v.date
-          AND v.date <= NEW.date
-          AND v.date >= NEW.date - interval '3 day'
+          AND v.meid IS NOT NULL
+          AND v.date <= now()
+          AND v.date >= now() - interval '3 day'
           AND v.eid IN (
             SELECT h.eid FROM healthdeclaration h
             WHERE fever = '1'
-            AND h.date <= NEW.date
-            AND h.date >= NEW.date - interval '3 day'
+            AND h.date <= now()
+            AND h.date >= now() - interval '3 day'
           )
   ) THEN
     RETURN OLD;
@@ -349,8 +350,8 @@ BEGIN
     FROM healthDeclaration h
     WHERE h.eid = NEW.beid
     AND h.fever = '1'
-    AND h.date >= NEW.date - interval '7 day'
-    AND h.date <= NEW.date
+    AND h.date >= now() - interval '7 day'
+    AND h.date <= now()
   ) THEN
     RETURN OLD;
   ELSEIF EXISTS (
@@ -372,13 +373,14 @@ BEGIN
           AND u.floor = v.floor
           AND u.time = v.time
           AND u.date = v.date
-          AND v.date <= NEW.date
-          AND v.date >= NEW.date - interval '3 day'
+          AND v.meid IS NOT NULL
+          AND v.date <= now()
+          AND v.date >= now() - interval '3 day'
           AND v.eid IN (
             SELECT h.eid FROM healthdeclaration h
             WHERE fever = '1'
-            AND h.date <= NEW.date
-            AND h.date >= NEW.date - interval '3 day'
+            AND h.date <= now()
+            AND h.date >= now() - interval '3 day'
           )
   ) THEN
     RETURN OLD;
