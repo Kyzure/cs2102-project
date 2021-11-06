@@ -622,12 +622,6 @@ AFTER INSERT ON Sessions
 FOR EACH ROW EXECUTE FUNCTION
   add_booker();
 
----- check_approveDate ----
-CREATE TRIGGER add_book
-BEFORE UPDATE ON Sessions
-FOR EACH ROW EXECUTE FUNCTION
-  check_approvalDate();
-
 ---------------------
 -- Contact Tracing --
 ---------------------
