@@ -106,14 +106,20 @@ WHERE s.eid IS NULL
   AND mr.did = 0
   AND s.date >= '2020-10-02';
 
--- Trying to add room in future --
-CALL add_room(69420, 69420, 'THIS ROOM MUST NOT EXIST', 10, 1, 3, '2025-01-01');
 
--- Trying to change capacity in future -- 
-CALL change_capacity(5, 8, 3, 10, '2025-01-01');
+
+
+-- Trying to add room in past --
+CALL add_room(69420, 69420, 'THIS ROOM MUST NOT EXIST', 10, 1, 1, '2020-01-01');
+
+-- Trying to change capacity in past -- 
+CALL change_capacity(10, 42, 1, 10, '2020-01-01');
 
 -- Trying to change capacity as non manager --
-CALL change_capacity(5, 8, 1, 10, '2020-01-01');
+CALL change_capacity(10, 42, 3, 10, '2025-01-01');
 
 -- Trying to change capacity of another department --
-CALL change_capacity(14, 50, 3, 10, '2020-01-01');
+CALL change_capacity(25, 33, 1, 10, '2025-01-01');
+
+-- Trying to make health declaration after resignation --
+CALL declare_health(130, '2021-10-03', 37);
