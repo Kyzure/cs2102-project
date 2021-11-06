@@ -32,13 +32,14 @@ class Booker:
     self.did = did
 
 class BookRoom: 
-  def __init__(self, floor, room, date, startTime, endTime, eid): 
+  def __init__(self, floor, room, date, startTime, endTime, eid, did): 
     self.floor = floor
     self.room = room
     self.date = date
     self.startTime = startTime
     self.endTime = endTime
     self.eid = eid
+    self.did = did
 
 class ApproveMeeting:
   def __init__(self, floor, room, date, startTime, endTime, eid): 
@@ -182,6 +183,13 @@ for num in range(1, 501):
   randType = random.randrange(0, 10)
   randPhone_1 = random.randrange(80000000, 99999999)
   randPhone_2 = random.randrange(80000000, 99999999)
+  isPhoneEmpty_1 = random.randrange(0, 8) == 0
+  isPhoneEmpty_2 = random.randrange(0, 3) == 0
+
+  if isPhoneEmpty_1:
+    randPhone_1 = 'null'
+  if isPhoneEmpty_2:
+    randPhone_2 = 'null'
 
   if randType <= 3:
     randType = "Junior"
@@ -307,7 +315,7 @@ for num in range(400):
 sqlString += "\n"
 
 #### book_room ####
-for num in range(300):
+for num in range(400):
   randRoom = random.randrange(0, len(room_floor))
   randDate = random.randrange(0, len(booking_dates))
   randStartTime = random.randrange(0, len(time_of_day))
@@ -333,7 +341,8 @@ for num in range(300):
     str(booking_dates[randDate]),
     str(time_of_day[randStartTime]),
     str(time_of_day[randEndTime]),
-    str(booker_list[randBooker].eid))
+    str(booker_list[randBooker].eid),
+    str(room_floor[randRoom].did))
 
   line = "CALL book_room ("
   line += obj.floor + ", " + obj.room + ", " + obj.date + ", "
@@ -369,13 +378,17 @@ for num in range(2000):
 sqlString += "\n"
 
 #### approve_meeting ####
-new_book_room = book_room 
-for num in range(295):
-  randBooking = random.randrange(0, len(new_book_room))
-  randManager = random.randrange(1, len(manager_list))
+for num in range(350):
+  randBooking = random.randrange(0, len(book_room))
+  temp_list = []
 
-  booking = new_book_room[randBooking]
-  new_book_room.pop(randBooking)
+  booking = book_room.pop(randBooking)
+
+  for m in manager_list:
+    if str(m.did) == str(booking.did):
+      temp_list.append(m)
+  randManager = random.randrange(0, len(temp_list))
+  manager = temp_list[randManager]
 
   obj = ApproveMeeting(
     str(booking.floor),
@@ -383,7 +396,7 @@ for num in range(295):
     str(booking.date),
     str(booking.startTime),
     str(booking.endTime),
-    str(manager_list[randManager].eid))
+    str(manager.eid))
 
   line = "CALL approve_meeting ("
   line += obj.floor + ", " + obj.room + ", " + obj.date + ", "
