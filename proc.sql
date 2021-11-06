@@ -86,12 +86,13 @@ CREATE OR REPLACE PROCEDURE add_employee
   (ename TEXT, primary_contact TEXT, secondary_contact TEXT, kind TEXT, did INTEGER)
 AS $$
 DECLARE
+  temp_name TEXT;
   new_eid INTEGER;
   new_email TEXT;
 BEGIN
   SELECT COALESCE(MAX(eid), 0) + 1 INTO new_eid FROM Employees;
-  SELECT REPLACE(ename, ' ', '_') INTO ename;
-  SELECT CONCAT(ename, new_eid, '@gmail.com') INTO new_email;
+  SELECT REPLACE(ename, ' ', '_') INTO temp_name;
+  SELECT CONCAT(temp_name, new_eid, '@gmail.com') INTO new_email;
   INSERT INTO Employees VALUES (new_eid, ename, new_email, primary_contact, secondary_contact, null, did);
   CASE
     WHEN kind = 'junior' OR kind = 'Junior' THEN
