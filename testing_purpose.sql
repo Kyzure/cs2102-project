@@ -108,6 +108,25 @@ WHERE s.eid IS NULL
 
 
 
+-- add department --
+CALL add_department(100, 'new department');
+
+-- remove department --
+CALL remove_department(100);
+
+-- add room --
+CALL add_room(1, 1, 'new room', 1, 1, 1, '2022-01-01');
+
+-- change capacity -- 
+CALL change_capacity(1, 1, 1, 10, '2022-01-02');
+
+-- add employee --
+CALL add_employee('chekjun', null, null, 'manager', 1);
+
+-- remove employee --
+CALL remove_employee(501, '2020-01-01');
+
+
 
 -- Trying to add room in past --
 CALL add_room(69420, 69420, 'THIS ROOM MUST NOT EXIST', 10, 1, 1, '2020-01-01');
