@@ -124,7 +124,7 @@ $$ LANGUAGE plpgsql;
 
 ---- search_room ----
 CREATE OR REPLACE FUNCTION search_room
-  (IN capacity INTEGER, IN date DATE, IN startTime TIME, IN endTime TIME)
+  (IN capacity INTEGER, IN dates DATE, IN startTime TIME, IN endTime TIME)
 RETURNS TABLE(floor INTEGER, room INTEGER, did INTEGER, room_capcity INTEGER) AS $$
 BEGIN
   RETURN QUERY (
@@ -141,6 +141,7 @@ BEGIN
       FROM Sessions s
       WHERE time >= startTime
       AND time < endTime
+      AND s.date = dates
     )
   );
 END
@@ -211,7 +212,8 @@ BEGIN
   AND j.room = room_number
   AND j.date = meet_date
   AND j.time >= startTime
-  AND j.time < endTime;
+  AND j.time < endTime
+  AND j.eid = id;
 END
 $$ LANGUAGE plpgsql;
 
@@ -302,7 +304,6 @@ BEGIN
           AND u.floor = v.floor
           AND u.time = v.time
           AND u.date = v.date
-          AND v.meid IS NOT NULL
           AND v.date <= now()
           AND v.date >= now() - interval '3 day'
           AND v.eid IN (
@@ -331,12 +332,13 @@ BEGIN
     AND s.time = NEW.time
     AND s.meid IS NOT NULL
   ) THEN
-    RETURN OLD;
+    RETURN NEW;
   ELSEIF (
     now() >= NEW.date
   ) THEN
-  ELSE
     RETURN NEW;
+  ELSE
+    RETURN OLD;
   END IF;
 END
 $$ LANGUAGE plpgsql;
@@ -373,7 +375,6 @@ BEGIN
           AND u.floor = v.floor
           AND u.time = v.time
           AND u.date = v.date
-          AND v.meid IS NOT NULL
           AND v.date <= now()
           AND v.date >= now() - interval '3 day'
           AND v.eid IN (
